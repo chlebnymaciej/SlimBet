@@ -120,6 +120,14 @@ tr.day-header:not(:first-child) td {
   margin-top: .15rem;
 }
 
+/* Others' bets reveal panel */
+.bets-reveal-row td { padding: 0 !important; border: none !important; }
+.bets-panel { padding: .25rem 1rem .6rem; background: #f8f9fa; border-top: 1px solid #e9ecef; }
+.bets-mini-table { width: 100%; font-size: .82rem; margin: 0; }
+.bets-mini-table th { font-weight: 600; color: #6c757d; padding: .2rem .5rem; border: none; }
+.bets-mini-table td { padding: .15rem .5rem; border: none; }
+.bets-mini-table tbody tr:nth-child(odd) td { background: #fff; }
+
 /* vs separator */
 .vs-sep {
   color: #adb5bd;

@@ -1,0 +1,25 @@
+{{define "fixture_bets"}}
+<div class="bets-panel">
+  {{if .}}
+  <table class="bets-mini-table">
+    <thead>
+      <tr><th>Player</th><th>Bet</th><th>Pts</th></tr>
+    </thead>
+    <tbody>
+      {{range .}}
+      <tr>
+        <td><strong>{{.Username}}</strong></td>
+        <td class="my-bet">{{.HomeScore}}–{{.AwayScore}}</td>
+        <td>
+          {{if .Points}}<span class="points-badge">{{deref .Points}}</span>
+          {{else}}—{{end}}
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+  {{else}}
+  <p style="padding:.5rem 1rem;color:#888;font-size:.85rem;margin:0">No bets placed yet.</p>
+  {{end}}
+</div>
+{{end}}

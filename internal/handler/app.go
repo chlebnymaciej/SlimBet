@@ -43,6 +43,7 @@ func (a *App) RegisterRoutes(mux *http.ServeMux, staticFS embed.FS) {
 	requireAdmin := auth.RequireAdmin(a.SM, a.BasePath)
 
 	mux.Handle("GET /fixtures", requireAuth(http.HandlerFunc(a.handleFixtures)))
+	mux.Handle("GET /fixtures/{id}/bets", requireAuth(http.HandlerFunc(a.handleFixtureBets)))
 	mux.Handle("GET /fixtures/{id}/bet", requireAuth(http.HandlerFunc(a.handleBetForm)))
 	mux.Handle("POST /fixtures/{id}/bet", requireAuth(http.HandlerFunc(a.handleBetSubmit)))
 	mux.Handle("GET /tournament", requireAuth(http.HandlerFunc(a.handleTournamentGet)))
@@ -161,6 +162,7 @@ func LoadTemplates(fs embed.FS, basePath string) (*TemplateSet, error) {
 		"fixture_row":      {"web/templates/fixture_row.html"},
 		"bet_form":         {"web/templates/bet_form.html"},
 		"leaderboard_rows": {"web/templates/leaderboard_rows.html"},
+		"fixture_bets":     {"web/templates/fixture_bets.html"},
 	}
 	for name, files := range partialFiles {
 		tmpl, err := template.New(name).Funcs(fmap).ParseFS(fs, files...)

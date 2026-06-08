@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"tournament-games/internal/db"
@@ -9,14 +10,15 @@ import (
 )
 
 type FixtureWithBet struct {
-	Fixture    *model.Fixture
-	UserBet    *model.Bet
-	Deadline   time.Time
-	IsBettable bool
+	Fixture       *model.Fixture
+	UserBet       *model.Bet
+	Deadline      time.Time
+	IsBettable    bool
+	TotalBetCount int
 }
 
 type DayGroup struct {
-	Date     string // e.g. "Sat, 14 Jun 2026"
+	Date     string
 	Fixtures []FixtureWithBet
 }
 
@@ -46,17 +48,19 @@ func (a *App) handleFixtures(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Group fixtures by round, preserving order.
+	betCounts, _ := db.GetBetCountsPerFixture(a.DB)
+
 	roundMap := make(map[string][]FixtureWithBet)
 	var roundOrder []string
 	seenRound := make(map[string]bool)
 
 	for _, f := range fixtures {
 		fb := FixtureWithBet{
-			Fixture:    f,
-			UserBet:    bets[f.ID],
-			Deadline:   f.BetDeadline(),
-			IsBettable: f.IsBettable(),
+			Fixture:       f,
+			UserBet:       bets[f.ID],
+			Deadline:      f.BetDeadline(),
+			IsBettable:    f.IsBettable(),
+			TotalBetCount: betCounts[f.ID],
 		}
 		if !seenRound[f.Round] {
 			seenRound[f.Round] = true
@@ -65,7 +69,6 @@ func (a *App) handleFixtures(w http.ResponseWriter, r *http.Request) {
 		roundMap[f.Round] = append(roundMap[f.Round], fb)
 	}
 
-	// Build rounds with day sub-grouping.
 	rounds := make([]RoundGroup, 0, len(roundOrder))
 	for _, roundName := range roundOrder {
 		fixturesInRound := roundMap[roundName]
@@ -99,4 +102,18 @@ func (a *App) handleFixtures(w http.ResponseWriter, r *http.Request) {
 		Rounds:       rounds,
 		FixtureCount: len(fixtures),
 	})
+}
+
+func (a *App) handleFixtureBets(w http.ResponseWriter, r *http.Request) {
+	fixtureID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	bets, err := db.GetBetsWithUsernamesForFixture(a.DB, fixtureID)
+	if err != nil {
+		http.Error(w, "db error", http.StatusInternalServerError)
+		return
+	}
+	a.Tmpl.Partial(w, "fixture_bets", bets)
 }

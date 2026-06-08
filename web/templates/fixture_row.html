@@ -53,7 +53,7 @@
       <em class="text-muted">—</em>
     {{end}}
   </td>
-  <td>
+  <td style="white-space:nowrap;display:flex;gap:.3rem;flex-wrap:wrap">
     {{if .IsBettable}}
       <button class="outline small"
         hx-get="{{url (printf "/fixtures/%d/bet" .Fixture.ID)}}"
@@ -62,6 +62,19 @@
         {{if .UserBet}}Edit{{else}}Bet{{end}}
       </button>
     {{end}}
+    {{if gt .TotalBetCount 0}}
+    <button class="outline small secondary"
+      hx-get="{{url (printf "/fixtures/%d/bets" .Fixture.ID)}}"
+      hx-target="#bets-panel-{{.Fixture.ID}}"
+      hx-swap="innerHTML">
+      👥 {{.TotalBetCount}}
+    </button>
+    {{end}}
+  </td>
+</tr>
+<tr class="bets-reveal-row">
+  <td colspan="7">
+    <div id="bets-panel-{{.Fixture.ID}}"></div>
   </td>
 </tr>
 {{end}}

@@ -247,6 +247,60 @@ func GetBetsForUser(db *sql.DB, userID int64) (map[int64]*model.Bet, error) {
 	return m, rows.Err()
 }
 
+// GetBetCountsPerFixture returns the number of bets per fixture (all fixtures).
+func GetBetCountsPerFixture(db *sql.DB) (map[int64]int, error) {
+	rows, err := db.Query("SELECT fixture_id, COUNT(*) FROM bets GROUP BY fixture_id")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	m := make(map[int64]int)
+	for rows.Next() {
+		var id int64
+		var count int
+		if err := rows.Scan(&id, &count); err != nil {
+			return nil, err
+		}
+		m[id] = count
+	}
+	return m, rows.Err()
+}
+
+// BetWithUser pairs a bet with the bettor's username.
+type BetWithUser struct {
+	Username       string
+	HomeScore      int
+	AwayScore      int
+	Points         *int
+	AdvancesPick   string
+	AdvancesPoints *int
+}
+
+// GetBetsWithUsernamesForFixture returns all non-admin bets for a fixture with usernames.
+func GetBetsWithUsernamesForFixture(db *sql.DB, fixtureID int64) ([]BetWithUser, error) {
+	rows, err := db.Query(`
+		SELECT u.username, b.home_score, b.away_score, b.points,
+		       COALESCE(b.advances_pick,''), b.advances_points
+		FROM bets b
+		JOIN users u ON u.id = b.user_id
+		WHERE b.fixture_id = ? AND u.is_admin = 0
+		ORDER BY u.username ASC`, fixtureID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var bets []BetWithUser
+	for rows.Next() {
+		var b BetWithUser
+		if err := rows.Scan(&b.Username, &b.HomeScore, &b.AwayScore, &b.Points,
+			&b.AdvancesPick, &b.AdvancesPoints); err != nil {
+			return nil, err
+		}
+		bets = append(bets, b)
+	}
+	return bets, rows.Err()
+}
+
 func UpdateBetPoints(db *sql.DB, betID int64, points int) error {
 	_, err := db.Exec("UPDATE bets SET points=?, updated_at=datetime('now') WHERE id=?", points, betID)
 	return err

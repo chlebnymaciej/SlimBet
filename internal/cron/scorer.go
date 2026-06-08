@@ -135,12 +135,27 @@ func (s *Scorer) processMatchResult(fixtureID int64, item *footballapi.MatchItem
 		return nil
 	}
 
-	goalsHome, goalsAway := 0, 0
-	if item.Score.FullTime.Home != nil {
-		goalsHome = *item.Score.FullTime.Home
+	derefInt := func(p *int) int {
+		if p == nil {
+			return 0
+		}
+		return *p
 	}
-	if item.Score.FullTime.Away != nil {
-		goalsAway = *item.Score.FullTime.Away
+
+	var goalsHome, goalsAway int
+	switch item.Score.Duration {
+	case "EXTRA_TIME", "PENALTY_SHOOTOUT":
+		// Sum per-period fields; fullTime is unreliable for PEN matches.
+		goalsHome = derefInt(item.Score.HalfTime.Home) +
+			derefInt(item.Score.RegularTime.Home) +
+			derefInt(item.Score.ExtraTime.Home)
+		goalsAway = derefInt(item.Score.HalfTime.Away) +
+			derefInt(item.Score.RegularTime.Away) +
+			derefInt(item.Score.ExtraTime.Away)
+	default:
+		// REGULAR: fullTime is the complete cumulative 90-min score.
+		goalsHome = derefInt(item.Score.FullTime.Home)
+		goalsAway = derefInt(item.Score.FullTime.Away)
 	}
 
 	if err := db.UpdateFixtureResult(s.db, fixtureID, item.Status, goalsHome, goalsAway,

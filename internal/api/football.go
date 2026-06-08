@@ -32,11 +32,11 @@ type MatchesResponse struct {
 }
 
 type MatchItem struct {
-	ID      int64  `json:"id"`
-	UTCDate string `json:"utcDate"` // RFC3339, e.g. "2026-06-11T18:00:00Z"
-	Status  string `json:"status"`  // SCHEDULED, IN_PLAY, PAUSED, FINISHED, POSTPONED, CANCELLED
-	Stage   string `json:"stage"`   // GROUP_STAGE, ROUND_OF_32, QUARTER_FINALS, etc.
-	Group   string `json:"group"`   // GROUP_A … GROUP_L, empty for knockout rounds
+	ID       int64  `json:"id"`
+	UTCDate  string `json:"utcDate"` // RFC3339, e.g. "2026-06-11T18:00:00Z"
+	Status   string `json:"status"`  // SCHEDULED, IN_PLAY, PAUSED, FINISHED, POSTPONED, CANCELLED
+	Stage    string `json:"stage"`   // GROUP_STAGE, ROUND_OF_32, QUARTER_FINALS, etc.
+	Group    string `json:"group"`   // GROUP_A … GROUP_L, empty for knockout rounds
 	HomeTeam struct {
 		ID   int64  `json:"id"`
 		Name string `json:"name"`
@@ -52,6 +52,23 @@ type MatchItem struct {
 			Home *int `json:"home"`
 			Away *int `json:"away"`
 		} `json:"fullTime"`
+		HalfTime struct {
+			Home *int `json:"home"`
+			Away *int `json:"away"`
+		} `json:"halfTime"`
+		RegularTime struct {
+			Home *int `json:"home"`
+			Away *int `json:"away"`
+		} `json:"regularTime"`
+		ExtraTime struct {
+			Home *int `json:"home"`
+			Away *int `json:"away"`
+		} `json:"extraTime"`
+		// Penalties holds only the penalty shootout goals (not cumulative); not used in bet scoring.
+		Penalties struct {
+			Home *int `json:"home"`
+			Away *int `json:"away"`
+		} `json:"penalties"`
 	} `json:"score"`
 }
 

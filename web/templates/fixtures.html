@@ -1,6 +1,13 @@
 {{define "content"}}
 <h2>Fixtures</h2>
-<p class="hint">Bets close 5 hours before kickoff. Points: <strong>exact score = X + goal bonus</strong>, <strong>correct outcome = Y + goal bonus</strong>. Goal bonus = max(0, pointsExact − |total goals diff|).</p>
+<p class="hint">Bets close 5 hours before kickoff. Points:
+    <ul>
+        <li>Correct outcome (win A, win B, draw) +5 points</li>
+        <li>Exact score +5 points</li>
+        <li>Goal bonus +MAX(0, 5 - |goals in match - bet goals in match|) points</li>
+        <li>Knockout only: Team advancing +5 points</li>
+    </ul>
+</p>
 
 {{if eq .FixtureCount 0}}
 <div class="flash-error">

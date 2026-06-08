@@ -1,0 +1,72 @@
+{{define "content"}}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+  <h2 style="margin:0">Fixtures — Matrix</h2>
+  <a href="{{url "/fixtures"}}" class="outline small">📋 List view</a>
+</div>
+
+<p class="hint" style="margin-bottom:.75rem">
+  Cell colours:
+  <span class="bc-legend bc-high">8+ pts</span>
+  <span class="bc-legend bc-mid">5–7 pts</span>
+  <span class="bc-legend bc-low">1–4 pts</span>
+  <span class="bc-legend bc-0">0 pts</span>
+  <span class="bc-legend bc-pending">pending</span>
+  <span class="bc-legend bc-none">no bet</span>
+</p>
+
+{{if not .Rows}}
+<p>No fixtures loaded yet.</p>
+{{else}}
+<div class="overflow-auto">
+<table class="matrix-table">
+  <thead>
+    <tr>
+      <th class="mx-match">Match</th>
+      <th class="mx-score">Score</th>
+      {{range .Users}}
+      <th class="mx-user">{{.Username}}</th>
+      {{end}}
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Rows}}
+    <tr class="mx-row{{if .Fixture.IsFinished}} mx-finished{{end}}">
+      <td class="mx-match">
+        {{flag .Fixture.HomeTeam}} <strong>{{.Fixture.HomeTeam}}</strong>
+        <span style="color:#adb5bd;font-size:.8rem">vs</span>
+        {{flag .Fixture.AwayTeam}} <strong>{{.Fixture.AwayTeam}}</strong>
+        <br><small class="text-muted">{{.Fixture.KickoffAt.Format "02 Jan 15:04"}}</small>
+      </td>
+      <td class="mx-score">
+        {{if .Fixture.IsFinished}}
+          <strong>{{deref .Fixture.GoalsHome}}–{{deref .Fixture.GoalsAway}}</strong>
+        {{else}}—{{end}}
+      </td>
+      {{range .Cells}}
+      <td class="bet-cell {{.CellClass}}">
+        {{if .Bet}}
+          <div class="bc-score">{{.Bet.HomeScore}}–{{.Bet.AwayScore}}</div>
+          {{if .AdvancesTeam}}<div class="bc-adv">+{{.AdvancesTeam}}</div>{{end}}
+          {{if .Bet.Points}}
+            <div class="bc-pts">{{deref .Bet.Points}} pts</div>
+          {{else if $.Fixture.IsFinished}}
+            <div class="bc-pts text-muted">—</div>
+          {{end}}
+          {{if .CanEdit}}
+          <a href="{{url "/fixtures"}}#fixture-{{.FixtureID}}" class="bc-edit" title="Edit bet">✏️</a>
+          {{end}}
+        {{else}}
+          <div class="bc-miss">—</div>
+          {{if .CanEdit}}
+          <a href="{{url "/fixtures"}}#fixture-{{.FixtureID}}" class="bc-edit" title="Place bet">+</a>
+          {{end}}
+        {{end}}
+      </td>
+      {{end}}
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+{{end}}

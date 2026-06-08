@@ -247,6 +247,49 @@ func GetBetsForUser(db *sql.DB, userID int64) (map[int64]*model.Bet, error) {
 	return m, rows.Err()
 }
 
+// GetNonAdminUsers returns id+username for all non-admin users, sorted by username.
+func GetNonAdminUsers(db *sql.DB) ([]*model.User, error) {
+	rows, err := db.Query("SELECT id, username FROM users WHERE is_admin=0 ORDER BY username ASC")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var users []*model.User
+	for rows.Next() {
+		u := &model.User{}
+		if err := rows.Scan(&u.ID, &u.Username); err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+	return users, rows.Err()
+}
+
+// GetAllBetsMatrix returns map[fixtureID][userID]*model.Bet for building the matrix view.
+func GetAllBetsMatrix(db *sql.DB) (map[int64]map[int64]*model.Bet, error) {
+	rows, err := db.Query(`
+		SELECT id, user_id, fixture_id, home_score, away_score, points,
+		       COALESCE(advances_pick,''), advances_points
+		FROM bets`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	m := make(map[int64]map[int64]*model.Bet)
+	for rows.Next() {
+		b := &model.Bet{}
+		if err := rows.Scan(&b.ID, &b.UserID, &b.FixtureID, &b.HomeScore, &b.AwayScore,
+			&b.Points, &b.AdvancesPick, &b.AdvancesPoints); err != nil {
+			return nil, err
+		}
+		if m[b.FixtureID] == nil {
+			m[b.FixtureID] = make(map[int64]*model.Bet)
+		}
+		m[b.FixtureID][b.UserID] = b
+	}
+	return m, rows.Err()
+}
+
 // GetBetCountsPerFixture returns the number of bets per fixture (all fixtures).
 func GetBetCountsPerFixture(db *sql.DB) (map[int64]int, error) {
 	rows, err := db.Query("SELECT fixture_id, COUNT(*) FROM bets GROUP BY fixture_id")

@@ -87,7 +87,7 @@ func (a *App) handleFixtures(w http.ResponseWriter, r *http.Request) {
 
 		var dayGroups []DayGroup
 		for _, dayKey := range dayOrder {
-			label := dayMap[dayKey][0].Fixture.KickoffAt.Format("Mon, 02 Jan 2006")
+			label := dayMap[dayKey][0].Fixture.KickoffAt.Format("Mon, 02 Jan 2026")
 			dayGroups = append(dayGroups, DayGroup{
 				Date:     label,
 				Fixtures: dayMap[dayKey],
@@ -116,4 +116,110 @@ func (a *App) handleFixtureBets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.Tmpl.Partial(w, "fixture_bets", bets)
+}
+
+// ── Matrix view ───────────────────────────────────────────────────────────────
+
+type MatrixCell struct {
+	Bet          *model.Bet
+	IsOwn        bool
+	CanEdit      bool
+	CellClass    string
+	FixtureID    int64
+	AdvancesTeam string // full team name or ""
+}
+
+type MatrixRow struct {
+	Fixture    *model.Fixture
+	IsBettable bool
+	Cells      []MatrixCell
+}
+
+type MatrixPageData struct {
+	BaseData
+	Users []*model.User
+	Rows  []MatrixRow
+}
+
+func cellClass(bet *model.Bet) string {
+	if bet == nil {
+		return "bc-none"
+	}
+	if bet.Points == nil {
+		return "bc-pending"
+	}
+	switch {
+	case *bet.Points == 0:
+		return "bc-0"
+	case *bet.Points <= 4:
+		return "bc-low"
+	case *bet.Points <= 7:
+		return "bc-mid"
+	default:
+		return "bc-high"
+	}
+}
+
+func (a *App) handleFixturesMatrix(w http.ResponseWriter, r *http.Request) {
+	currentUserID := a.currentUserID(r)
+
+	fixtures, err := db.GetFixtures(a.DB)
+	if err != nil {
+		http.Error(w, "db error", http.StatusInternalServerError)
+		return
+	}
+
+	users, err := db.GetNonAdminUsers(a.DB)
+	if err != nil {
+		http.Error(w, "db error", http.StatusInternalServerError)
+		return
+	}
+
+	allBets, err := db.GetAllBetsMatrix(a.DB)
+	if err != nil {
+		http.Error(w, "db error", http.StatusInternalServerError)
+		return
+	}
+
+	rows := make([]MatrixRow, 0, len(fixtures))
+	for _, f := range fixtures {
+		bettable := f.IsBettable()
+		fixtureBets := allBets[f.ID]
+
+		cells := make([]MatrixCell, len(users))
+		for i, u := range users {
+			bet := fixtureBets[u.ID]
+			isOwn := u.ID == currentUserID
+
+			advancesTeam := ""
+			if bet != nil && bet.AdvancesPick != "" {
+				if bet.AdvancesPick == "HOME" {
+					advancesTeam = f.HomeTeam
+				} else {
+					advancesTeam = f.AwayTeam
+				}
+			}
+
+			cells[i] = MatrixCell{
+				Bet:          bet,
+				IsOwn:        isOwn,
+				CanEdit:      isOwn && bettable,
+				CellClass:    cellClass(bet),
+				FixtureID:    f.ID,
+				AdvancesTeam: advancesTeam,
+			}
+		}
+
+		rows = append(rows, MatrixRow{
+			Fixture:    f,
+			IsBettable: bettable,
+			Cells:      cells,
+		})
+	}
+
+	a.Tmpl.Page(w, "fixtures_matrix", MatrixPageData{
+		BaseData: a.baseData(r),
+		Users:    users,
+		Rows:     rows,
+	})
 }

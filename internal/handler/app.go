@@ -43,6 +43,7 @@ func (a *App) RegisterRoutes(mux *http.ServeMux, staticFS embed.FS) {
 	requireAdmin := auth.RequireAdmin(a.SM, a.BasePath)
 
 	mux.Handle("GET /fixtures", requireAuth(http.HandlerFunc(a.handleFixtures)))
+	mux.Handle("GET /fixtures/matrix", requireAuth(http.HandlerFunc(a.handleFixturesMatrix)))
 	mux.Handle("GET /fixtures/{id}/bets", requireAuth(http.HandlerFunc(a.handleFixtureBets)))
 	mux.Handle("GET /fixtures/{id}/bet", requireAuth(http.HandlerFunc(a.handleBetForm)))
 	mux.Handle("POST /fixtures/{id}/bet", requireAuth(http.HandlerFunc(a.handleBetSubmit)))
@@ -144,6 +145,7 @@ func LoadTemplates(fs embed.FS, basePath string) (*TemplateSet, error) {
 		"login":           {"web/templates/base.html", "web/templates/login.html"},
 		"register":        {"web/templates/base.html", "web/templates/register.html"},
 		"fixtures":        {"web/templates/base.html", "web/templates/fixtures.html", "web/templates/fixture_row.html"},
+		"fixtures_matrix": {"web/templates/base.html", "web/templates/fixtures_matrix.html"},
 		"tournament_bets": {"web/templates/base.html", "web/templates/tournament_bets.html"},
 		"group_bets":      {"web/templates/base.html", "web/templates/group_bets.html"},
 		"leaderboard":     {"web/templates/base.html", "web/templates/leaderboard.html", "web/templates/leaderboard_rows.html"},

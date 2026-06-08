@@ -1,0 +1,18 @@
+{{define "content"}}
+<article style="max-width:400px;margin:4rem auto">
+  <h2>Register</h2>
+  {{if .Error}}<p class="flash-error">{{.Error}}</p>{{end}}
+  <form method="post" action="/register">
+    <label>
+      Username
+      <input type="text" name="username" required autofocus minlength="2" maxlength="30" />
+    </label>
+    <label>
+      Password
+      <input type="password" name="password" required minlength="6" />
+    </label>
+    <button type="submit">Create account</button>
+  </form>
+  <p style="margin-top:1rem">Already have an account? <a href="/login">Login</a></p>
+</article>
+{{end}}

@@ -1,0 +1,50 @@
+{{define "fixture_row"}}
+<tr id="fixture-{{.Fixture.ID}}">
+  <td><strong>{{.Fixture.HomeTeam}}</strong> vs <strong>{{.Fixture.AwayTeam}}</strong></td>
+  <td>{{.Fixture.KickoffAt.Format "02 Jan 15:04"}}</td>
+  <td>
+    {{if .Fixture.IsFinished}}
+      <span class="badge badge-done">{{.Fixture.Status}}</span>
+    {{else if eq .Fixture.Status "1H"}}
+      <span class="badge badge-live">LIVE</span>
+    {{else if eq .Fixture.Status "HT"}}
+      <span class="badge badge-live">HT</span>
+    {{else if eq .Fixture.Status "2H"}}
+      <span class="badge badge-live">LIVE</span>
+    {{else}}
+      <span class="badge badge-ns">{{.Fixture.Status}}</span>
+    {{end}}
+  </td>
+  <td>
+    {{if and .Fixture.GoalsHome .Fixture.GoalsAway}}
+      {{deref .Fixture.GoalsHome}} – {{deref .Fixture.GoalsAway}}
+    {{else}}
+      —
+    {{end}}
+  </td>
+  <td id="bet-{{.Fixture.ID}}">
+    {{if .UserBet}}
+      <span class="my-bet">{{.UserBet.HomeScore}}–{{.UserBet.AwayScore}}</span>
+      {{if .UserBet.Points}}
+        <span class="points-badge">{{deref .UserBet.Points}} pts</span>
+      {{else if .Fixture.IsFinished}}
+        <span class="points-pending">—</span>
+      {{end}}
+    {{else if .IsBettable}}
+      <em class="text-muted">No bet</em>
+    {{else}}
+      <em class="text-muted">—</em>
+    {{end}}
+  </td>
+  <td>
+    {{if .IsBettable}}
+      <button class="outline small"
+        hx-get="/fixtures/{{.Fixture.ID}}/bet"
+        hx-target="#bet-{{.Fixture.ID}}"
+        hx-swap="innerHTML">
+        {{if .UserBet}}Edit{{else}}Bet{{end}}
+      </button>
+    {{end}}
+  </td>
+</tr>
+{{end}}

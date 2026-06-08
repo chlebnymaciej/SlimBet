@@ -1,0 +1,46 @@
+{{define "content"}}
+<h2>Tournament Bets</h2>
+
+{{if .IsLocked}}
+<p class="flash-error">Bets are locked (deadline: {{.Deadline.Format "02 Jan 2006 15:04 UTC"}}).</p>
+{{else if not .Deadline.IsZero}}
+<p class="hint">Deadline: <strong>{{.Deadline.Format "02 Jan 2006 15:04 UTC"}}</strong></p>
+{{end}}
+
+{{if .Flash}}<p class="flash-success">{{.Flash}}</p>{{end}}
+
+<article>
+  <form method="post" action="/tournament" {{if .IsLocked}}style="opacity:.6;pointer-events:none"{{end}}>
+    <div class="grid">
+      <label>
+        🥇 1st Place (Champion)
+        <input type="text" name="first_place" placeholder="Team name"
+          value="{{if .Bet}}{{.Bet.FirstPlace}}{{end}}" {{if .IsLocked}}disabled{{end}} />
+      </label>
+      <label>
+        🥈 2nd Place
+        <input type="text" name="second_place" placeholder="Team name"
+          value="{{if .Bet}}{{.Bet.SecondPlace}}{{end}}" {{if .IsLocked}}disabled{{end}} />
+      </label>
+    </div>
+    <div class="grid">
+      <label>
+        🥉 3rd Place
+        <input type="text" name="third_place" placeholder="Team name"
+          value="{{if .Bet}}{{.Bet.ThirdPlace}}{{end}}" {{if .IsLocked}}disabled{{end}} />
+      </label>
+      <label>
+        ⚽ Top Scorer
+        <input type="text" name="top_scorer" placeholder="Player name"
+          value="{{if .Bet}}{{.Bet.TopScorer}}{{end}}" {{if .IsLocked}}disabled{{end}} />
+      </label>
+    </div>
+    {{if not .IsLocked}}
+    <button type="submit">Save tournament bets</button>
+    {{end}}
+    {{if and .Bet .Bet.Points}}
+    <p>Points awarded: <strong>{{deref .Bet.Points}}</strong></p>
+    {{end}}
+  </form>
+</article>
+{{end}}

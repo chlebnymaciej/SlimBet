@@ -1,0 +1,47 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WC 2026 Bets</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body>
+  <header class="container-fluid">
+    <nav>
+      <ul>
+        <li><strong>⚽ WC 2026</strong></li>
+      </ul>
+      {{if .Username}}
+      <ul>
+        <li><a href="/fixtures">Fixtures</a></li>
+        <li><a href="/groups">Groups</a></li>
+        <li><a href="/tournament">Tournament</a></li>
+        <li><a href="/leaderboard">Leaderboard</a></li>
+        {{if .IsAdmin}}<li><a href="/admin">Admin</a></li>{{end}}
+        <li>
+          <form method="post" action="/logout" style="margin:0">
+            <button type="submit" class="outline secondary">Logout ({{.Username}})</button>
+          </form>
+        </li>
+      </ul>
+      {{end}}
+    </nav>
+  </header>
+
+  <main class="container">
+    {{if .Flash}}<div class="flash-success">{{.Flash}}</div>{{end}}
+    {{if .Error}}<div class="flash-error">{{.Error}}</div>{{end}}
+    {{template "content" .}}
+  </main>
+
+  <footer class="container" style="margin-top:2rem;text-align:center;color:#888;font-size:.85rem">
+    WC 2026 Betting App
+  </footer>
+</body>
+</html>
+{{end}}

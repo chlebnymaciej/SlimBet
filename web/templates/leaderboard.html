@@ -1,0 +1,10 @@
+{{define "content"}}
+<h2>Leaderboard</h2>
+
+<div id="leaderboard-table"
+     hx-get="/leaderboard/partial"
+     hx-trigger="every 60s"
+     hx-swap="innerHTML">
+  {{template "leaderboard_rows" .Entries}}
+</div>
+{{end}}

@@ -1,0 +1,30 @@
+{{define "leaderboard_rows"}}
+{{if .}}
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Player</th>
+      <th>Match pts</th>
+      <th>Group pts</th>
+      <th>Tournament pts</th>
+      <th><strong>Total</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .}}
+    <tr {{if eq .Rank 1}}class="top1"{{else if eq .Rank 2}}class="top2"{{else if eq .Rank 3}}class="top3"{{end}}>
+      <td>{{.Rank}}</td>
+      <td>{{.Username}}</td>
+      <td>{{.MatchPoints}}</td>
+      <td>{{.GroupPoints}}</td>
+      <td>{{.TournamentPoints}}</td>
+      <td><strong>{{.TotalPoints}}</strong></td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+{{else}}
+<p>No data yet — place some bets!</p>
+{{end}}
+{{end}}

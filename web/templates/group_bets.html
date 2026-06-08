@@ -1,0 +1,40 @@
+{{define "content"}}
+<h2>Group Winner Bets</h2>
+
+{{if .IsLocked}}
+<p class="flash-error">Bets are locked (deadline: {{.Deadline.Format "02 Jan 2006 15:04 UTC"}}).</p>
+{{else}}
+  {{if not .Deadline.IsZero}}
+  <p class="hint">Deadline: <strong>{{.Deadline.Format "02 Jan 2006 15:04 UTC"}}</strong></p>
+  {{end}}
+{{end}}
+
+{{if .Flash}}<p class="flash-success">{{.Flash}}</p>{{end}}
+
+<article>
+  <form method="post" action="/groups" {{if .IsLocked}}style="opacity:.6;pointer-events:none"{{end}}>
+    <div class="grid-3">
+    {{range .Groups}}
+    {{$group := .}}
+    <label>
+      Group {{.Name}}
+      <select name="group_{{.Name}}" {{if $.IsLocked}}disabled{{end}}>
+        <option value="">— pick winner —</option>
+        {{range .Teams}}
+        <option value="{{.}}"{{if and $group.UserBet (eq $group.UserBet.TeamName .)}} selected{{end}}>{{.}}</option>
+        {{end}}
+      </select>
+      {{if .UserBet}}
+        <small>Current: <strong>{{.UserBet.TeamName}}</strong>{{if .UserBet.Points}} · {{deref .UserBet.Points}} pts{{end}}</small>
+      {{end}}
+    </label>
+    {{else}}
+    <p>No groups available yet. Ask admin to load fixtures.</p>
+    {{end}}
+    </div>
+    {{if not .IsLocked}}
+    <button type="submit" style="margin-top:1rem">Save group bets</button>
+    {{end}}
+  </form>
+</article>
+{{end}}

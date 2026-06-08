@@ -1,0 +1,22 @@
+{{define "bet_form"}}
+{{if .Error}}<span class="flash-error-inline">{{.Error}}</span>{{end}}
+{{if .IsBettable}}
+<form hx-post="/fixtures/{{.Fixture.ID}}/bet"
+      hx-target="#fixture-{{.Fixture.ID}}"
+      hx-swap="outerHTML"
+      style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+  <input type="number" name="home_score" min="0" max="20" style="width:4rem"
+    value="{{if .ExistingBet}}{{.ExistingBet.HomeScore}}{{else}}0{{end}}" required />
+  <span>–</span>
+  <input type="number" name="away_score" min="0" max="20" style="width:4rem"
+    value="{{if .ExistingBet}}{{.ExistingBet.AwayScore}}{{else}}0{{end}}" required />
+  <button type="submit" class="small">Save</button>
+  <button type="button" class="outline small secondary"
+    onclick="document.getElementById('bet-{{.Fixture.ID}}').innerHTML = '{{if .ExistingBet}}<span class=\'my-bet\'>{{.ExistingBet.HomeScore}}–{{.ExistingBet.AwayScore}}</span>{{else}}<em class=\'text-muted\'>No bet</em>{{end}}'">
+    Cancel
+  </button>
+</form>
+{{else}}
+<em class="text-muted">Bet window closed.</em>
+{{end}}
+{{end}}

@@ -1,0 +1,46 @@
+{{define "content"}}
+<h2>Admin Panel</h2>
+
+{{if .Flash}}<p class="flash-success">{{.Flash}}</p>{{end}}
+{{if .Error}}<p class="flash-error">{{.Error}}</p>{{end}}
+
+<div class="grid">
+
+<article>
+  <h3>Fixtures</h3>
+  <p>Loaded: <strong>{{.FixtureCount}}</strong> fixtures</p>
+  <form method="post" action="/admin/setup">
+    <button type="submit" class="outline">Re-fetch all fixtures from API</button>
+  </form>
+  <hr />
+  <form method="post" action="/admin/score-all" style="margin-top:1rem">
+    <button type="submit">Run scoring on all finished fixtures</button>
+  </form>
+</article>
+
+<article>
+  <h3>Points Config</h3>
+  <form method="post" action="/admin/config">
+    <label>
+      Exact score points (X)
+      <input type="number" name="points_exact" min="0" value="{{.PointsExact}}" />
+    </label>
+    <label>
+      Correct outcome points (Y)
+      <input type="number" name="points_outcome" min="0" value="{{.PointsOutcome}}" />
+    </label>
+    <label>
+      Group winner points (G)
+      <input type="number" name="points_group" min="0" value="{{.PointsGroup}}" />
+    </label>
+    <label>
+      Tournament bet deadline
+      <input type="datetime-local" name="tournament_deadline"
+        value="{{.Deadline.Format "2006-01-02T15:04"}}" />
+    </label>
+    <button type="submit">Save config</button>
+  </form>
+</article>
+
+</div>
+{{end}}

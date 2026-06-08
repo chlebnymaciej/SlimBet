@@ -1,0 +1,469 @@
+package db
+
+import (
+	"database/sql"
+	"fmt"
+	"time"
+
+	"tournament-games/internal/model"
+)
+
+// ── Users ────────────────────────────────────────────────────────────────────
+
+func CreateUser(db *sql.DB, username, passwordHash string) (*model.User, error) {
+	res, err := db.Exec(
+		"INSERT INTO users (username, password_hash) VALUES (?, ?)",
+		username, passwordHash,
+	)
+	if err != nil {
+		return nil, err
+	}
+	id, _ := res.LastInsertId()
+	return &model.User{ID: id, Username: username, PasswordHash: passwordHash}, nil
+}
+
+func GetUserByUsername(db *sql.DB, username string) (*model.User, error) {
+	u := &model.User{}
+	err := db.QueryRow(
+		"SELECT id, username, password_hash, is_admin FROM users WHERE username = ?",
+		username,
+	).Scan(&u.ID, &u.Username, &u.PasswordHash, &u.IsAdmin)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return u, err
+}
+
+func GetUserByID(db *sql.DB, id int64) (*model.User, error) {
+	u := &model.User{}
+	err := db.QueryRow(
+		"SELECT id, username, password_hash, is_admin FROM users WHERE id = ?", id,
+	).Scan(&u.ID, &u.Username, &u.PasswordHash, &u.IsAdmin)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return u, err
+}
+
+// ── Fixtures ─────────────────────────────────────────────────────────────────
+
+func UpsertFixture(db *sql.DB, f *model.Fixture) error {
+	_, err := db.Exec(`
+		INSERT INTO fixtures
+			(id, api_id, home_team, away_team, home_team_id, away_team_id,
+			 kickoff_at, round, group_name, venue, status, goals_home, goals_away,
+			 scores_fetched, updated_at)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))
+		ON CONFLICT(id) DO UPDATE SET
+			status         = excluded.status,
+			goals_home     = excluded.goals_home,
+			goals_away     = excluded.goals_away,
+			scores_fetched = excluded.scores_fetched,
+			updated_at     = datetime('now')`,
+		f.ID, f.APIID, f.HomeTeam, f.AwayTeam, f.HomeTeamID, f.AwayTeamID,
+		f.KickoffAt.UTC().Format(time.RFC3339), f.Round, f.Group, f.Venue,
+		f.Status, f.GoalsHome, f.GoalsAway, boolToInt(f.ScoresFetched),
+	)
+	return err
+}
+
+func GetFixtures(db *sql.DB) ([]*model.Fixture, error) {
+	rows, err := db.Query(`
+		SELECT id, api_id, home_team, away_team, home_team_id, away_team_id,
+		       kickoff_at, round, group_name, venue, status,
+		       goals_home, goals_away, scores_fetched
+		FROM fixtures ORDER BY kickoff_at ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanFixtures(rows)
+}
+
+func GetFixtureByID(db *sql.DB, id int64) (*model.Fixture, error) {
+	row := db.QueryRow(`
+		SELECT id, api_id, home_team, away_team, home_team_id, away_team_id,
+		       kickoff_at, round, group_name, venue, status,
+		       goals_home, goals_away, scores_fetched
+		FROM fixtures WHERE id = ?`, id)
+	f, err := scanFixture(row)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return f, err
+}
+
+// GetUnscored returns fixtures that have finished but haven't been scored yet.
+func GetUnscored(db *sql.DB) ([]*model.Fixture, error) {
+	rows, err := db.Query(`
+		SELECT id, api_id, home_team, away_team, home_team_id, away_team_id,
+		       kickoff_at, round, group_name, venue, status,
+		       goals_home, goals_away, scores_fetched
+		FROM fixtures
+		WHERE scores_fetched = 0
+		  AND kickoff_at < datetime('now', '-115 minutes')
+		  AND status NOT IN ('FT','AET','PEN','CANC')
+		ORDER BY kickoff_at ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanFixtures(rows)
+}
+
+func GetUnscoredFinished(db *sql.DB) ([]*model.Fixture, error) {
+	rows, err := db.Query(`
+		SELECT id, api_id, home_team, away_team, home_team_id, away_team_id,
+		       kickoff_at, round, group_name, venue, status,
+		       goals_home, goals_away, scores_fetched
+		FROM fixtures
+		WHERE scores_fetched = 0
+		  AND status IN ('FT','AET','PEN')
+		ORDER BY kickoff_at ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanFixtures(rows)
+}
+
+func FixtureCount(db *sql.DB) (int, error) {
+	var n int
+	err := db.QueryRow("SELECT COUNT(*) FROM fixtures").Scan(&n)
+	return n, err
+}
+
+func MarkScored(db *sql.DB, fixtureID int64) error {
+	_, err := db.Exec(
+		"UPDATE fixtures SET scores_fetched=1, updated_at=datetime('now') WHERE id=?",
+		fixtureID,
+	)
+	return err
+}
+
+func UpdateFixtureResult(db *sql.DB, fixtureID int64, status string, goalsHome, goalsAway int) error {
+	_, err := db.Exec(`
+		UPDATE fixtures SET status=?, goals_home=?, goals_away=?, updated_at=datetime('now')
+		WHERE id=?`,
+		status, goalsHome, goalsAway, fixtureID,
+	)
+	return err
+}
+
+// ── Bets ─────────────────────────────────────────────────────────────────────
+
+func GetBet(db *sql.DB, userID, fixtureID int64) (*model.Bet, error) {
+	b := &model.Bet{}
+	err := db.QueryRow(`
+		SELECT id, user_id, fixture_id, home_score, away_score, points
+		FROM bets WHERE user_id=? AND fixture_id=?`,
+		userID, fixtureID,
+	).Scan(&b.ID, &b.UserID, &b.FixtureID, &b.HomeScore, &b.AwayScore, &b.Points)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return b, err
+}
+
+func UpsertBet(db *sql.DB, userID, fixtureID int64, homeScore, awayScore int) error {
+	_, err := db.Exec(`
+		INSERT INTO bets (user_id, fixture_id, home_score, away_score)
+		VALUES (?,?,?,?)
+		ON CONFLICT(user_id, fixture_id) DO UPDATE SET
+			home_score = excluded.home_score,
+			away_score = excluded.away_score,
+			updated_at = datetime('now')`,
+		userID, fixtureID, homeScore, awayScore,
+	)
+	return err
+}
+
+func GetBetsForFixture(db *sql.DB, fixtureID int64) ([]*model.Bet, error) {
+	rows, err := db.Query(`
+		SELECT id, user_id, fixture_id, home_score, away_score, points
+		FROM bets WHERE fixture_id=?`, fixtureID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var bets []*model.Bet
+	for rows.Next() {
+		b := &model.Bet{}
+		if err := rows.Scan(&b.ID, &b.UserID, &b.FixtureID, &b.HomeScore, &b.AwayScore, &b.Points); err != nil {
+			return nil, err
+		}
+		bets = append(bets, b)
+	}
+	return bets, rows.Err()
+}
+
+func GetBetsForUser(db *sql.DB, userID int64) (map[int64]*model.Bet, error) {
+	rows, err := db.Query(`
+		SELECT id, user_id, fixture_id, home_score, away_score, points
+		FROM bets WHERE user_id=?`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	m := make(map[int64]*model.Bet)
+	for rows.Next() {
+		b := &model.Bet{}
+		if err := rows.Scan(&b.ID, &b.UserID, &b.FixtureID, &b.HomeScore, &b.AwayScore, &b.Points); err != nil {
+			return nil, err
+		}
+		m[b.FixtureID] = b
+	}
+	return m, rows.Err()
+}
+
+func UpdateBetPoints(db *sql.DB, betID int64, points int) error {
+	_, err := db.Exec("UPDATE bets SET points=?, updated_at=datetime('now') WHERE id=?", points, betID)
+	return err
+}
+
+// ── Tournament bets ───────────────────────────────────────────────────────────
+
+func GetTournamentBet(db *sql.DB, userID int64) (*model.TournamentBet, error) {
+	tb := &model.TournamentBet{}
+	var locked int
+	err := db.QueryRow(`
+		SELECT id, user_id, first_place, second_place, third_place, top_scorer, points, locked
+		FROM tournament_bets WHERE user_id=?`, userID,
+	).Scan(&tb.ID, &tb.UserID, &tb.FirstPlace, &tb.SecondPlace, &tb.ThirdPlace, &tb.TopScorer, &tb.Points, &locked)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	tb.Locked = locked == 1
+	return tb, err
+}
+
+func UpsertTournamentBet(db *sql.DB, tb *model.TournamentBet) error {
+	_, err := db.Exec(`
+		INSERT INTO tournament_bets (user_id, first_place, second_place, third_place, top_scorer)
+		VALUES (?,?,?,?,?)
+		ON CONFLICT(user_id) DO UPDATE SET
+			first_place  = excluded.first_place,
+			second_place = excluded.second_place,
+			third_place  = excluded.third_place,
+			top_scorer   = excluded.top_scorer,
+			updated_at   = datetime('now')`,
+		tb.UserID, tb.FirstPlace, tb.SecondPlace, tb.ThirdPlace, tb.TopScorer,
+	)
+	return err
+}
+
+func LockTournamentBets(db *sql.DB) error {
+	_, err := db.Exec("UPDATE tournament_bets SET locked=1")
+	return err
+}
+
+func UpdateTournamentBetPoints(db *sql.DB, userID int64, points int) error {
+	_, err := db.Exec(
+		"UPDATE tournament_bets SET points=?, updated_at=datetime('now') WHERE user_id=?",
+		points, userID,
+	)
+	return err
+}
+
+func GetAllTournamentBets(db *sql.DB) ([]*model.TournamentBet, error) {
+	rows, err := db.Query(`
+		SELECT id, user_id, first_place, second_place, third_place, top_scorer, points, locked
+		FROM tournament_bets`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var bets []*model.TournamentBet
+	for rows.Next() {
+		tb := &model.TournamentBet{}
+		var locked int
+		if err := rows.Scan(&tb.ID, &tb.UserID, &tb.FirstPlace, &tb.SecondPlace, &tb.ThirdPlace, &tb.TopScorer, &tb.Points, &locked); err != nil {
+			return nil, err
+		}
+		tb.Locked = locked == 1
+		bets = append(bets, tb)
+	}
+	return bets, rows.Err()
+}
+
+// ── Group bets ────────────────────────────────────────────────────────────────
+
+func GetGroupBetsForUser(db *sql.DB, userID int64) (map[string]*model.GroupBet, error) {
+	rows, err := db.Query(`
+		SELECT id, user_id, group_name, team_name, points
+		FROM group_bets WHERE user_id=?`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	m := make(map[string]*model.GroupBet)
+	for rows.Next() {
+		gb := &model.GroupBet{}
+		if err := rows.Scan(&gb.ID, &gb.UserID, &gb.GroupName, &gb.TeamName, &gb.Points); err != nil {
+			return nil, err
+		}
+		m[gb.GroupName] = gb
+	}
+	return m, rows.Err()
+}
+
+func UpsertGroupBet(db *sql.DB, userID int64, groupName, teamName string) error {
+	_, err := db.Exec(`
+		INSERT INTO group_bets (user_id, group_name, team_name)
+		VALUES (?,?,?)
+		ON CONFLICT(user_id, group_name) DO UPDATE SET
+			team_name  = excluded.team_name,
+			updated_at = datetime('now')`,
+		userID, groupName, teamName,
+	)
+	return err
+}
+
+func UpdateGroupBetPoints(db *sql.DB, id int64, points int) error {
+	_, err := db.Exec("UPDATE group_bets SET points=?, updated_at=datetime('now') WHERE id=?", points, id)
+	return err
+}
+
+func GetGroupBetsForGroup(db *sql.DB, groupName string) ([]*model.GroupBet, error) {
+	rows, err := db.Query(`
+		SELECT id, user_id, group_name, team_name, points
+		FROM group_bets WHERE group_name=?`, groupName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var bets []*model.GroupBet
+	for rows.Next() {
+		gb := &model.GroupBet{}
+		if err := rows.Scan(&gb.ID, &gb.UserID, &gb.GroupName, &gb.TeamName, &gb.Points); err != nil {
+			return nil, err
+		}
+		bets = append(bets, gb)
+	}
+	return bets, rows.Err()
+}
+
+// ── Groups (derived from fixtures) ───────────────────────────────────────────
+
+// GetGroupTeams returns map[groupName][]teamName derived from fixture data.
+func GetGroupTeams(db *sql.DB) (map[string][]string, error) {
+	rows, err := db.Query(`
+		SELECT DISTINCT group_name, home_team FROM fixtures WHERE group_name != ''
+		UNION
+		SELECT DISTINCT group_name, away_team FROM fixtures WHERE group_name != ''
+		ORDER BY group_name, home_team`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	m := make(map[string][]string)
+	seen := make(map[string]map[string]bool)
+	for rows.Next() {
+		var g, t string
+		if err := rows.Scan(&g, &t); err != nil {
+			return nil, err
+		}
+		if seen[g] == nil {
+			seen[g] = make(map[string]bool)
+		}
+		if !seen[g][t] {
+			seen[g][t] = true
+			m[g] = append(m[g], t)
+		}
+	}
+	return m, rows.Err()
+}
+
+// ── Leaderboard ───────────────────────────────────────────────────────────────
+
+func GetLeaderboard(db *sql.DB) ([]*model.LeaderboardEntry, error) {
+	rows, err := db.Query(`
+		SELECT
+			u.username,
+			COALESCE(SUM(b.points), 0)  AS match_pts,
+			COALESCE(tb.points, 0)      AS tournament_pts,
+			COALESCE(SUM(gb.points), 0) AS group_pts
+		FROM users u
+		LEFT JOIN bets          b  ON b.user_id  = u.id
+		LEFT JOIN tournament_bets tb ON tb.user_id = u.id
+		LEFT JOIN group_bets    gb ON gb.user_id  = u.id
+		WHERE u.is_admin = 0
+		GROUP BY u.id
+		ORDER BY (COALESCE(SUM(b.points),0) + COALESCE(tb.points,0) + COALESCE(SUM(gb.points),0)) DESC,
+		         u.username ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var entries []*model.LeaderboardEntry
+	rank := 1
+	for rows.Next() {
+		e := &model.LeaderboardEntry{Rank: rank}
+		if err := rows.Scan(&e.Username, &e.MatchPoints, &e.TournamentPoints, &e.GroupPoints); err != nil {
+			return nil, err
+		}
+		e.TotalPoints = e.MatchPoints + e.TournamentPoints + e.GroupPoints
+		entries = append(entries, e)
+		rank++
+	}
+	return entries, rows.Err()
+}
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+
+func scanFixtures(rows *sql.Rows) ([]*model.Fixture, error) {
+	var fixtures []*model.Fixture
+	for rows.Next() {
+		f, err := scanFixtureRow(rows)
+		if err != nil {
+			return nil, err
+		}
+		fixtures = append(fixtures, f)
+	}
+	return fixtures, rows.Err()
+}
+
+type scanner interface {
+	Scan(dest ...any) error
+}
+
+func scanFixture(row *sql.Row) (*model.Fixture, error) {
+	f := &model.Fixture{}
+	var kickoffStr string
+	var scored int
+	err := row.Scan(
+		&f.ID, &f.APIID, &f.HomeTeam, &f.AwayTeam, &f.HomeTeamID, &f.AwayTeamID,
+		&kickoffStr, &f.Round, &f.Group, &f.Venue, &f.Status,
+		&f.GoalsHome, &f.GoalsAway, &scored,
+	)
+	if err != nil {
+		return nil, err
+	}
+	f.KickoffAt, _ = time.Parse(time.RFC3339, kickoffStr)
+	f.ScoresFetched = scored == 1
+	return f, nil
+}
+
+func scanFixtureRow(rows *sql.Rows) (*model.Fixture, error) {
+	f := &model.Fixture{}
+	var kickoffStr string
+	var scored int
+	err := rows.Scan(
+		&f.ID, &f.APIID, &f.HomeTeam, &f.AwayTeam, &f.HomeTeamID, &f.AwayTeamID,
+		&kickoffStr, &f.Round, &f.Group, &f.Venue, &f.Status,
+		&f.GoalsHome, &f.GoalsAway, &scored,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("scan fixture: %w", err)
+	}
+	f.KickoffAt, _ = time.Parse(time.RFC3339, kickoffStr)
+	f.ScoresFetched = scored == 1
+	return f, nil
+}
+
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}

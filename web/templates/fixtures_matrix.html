@@ -30,6 +30,7 @@
   </thead>
   <tbody>
     {{range .Rows}}
+    {{$row := .}}
     <tr class="mx-row{{if .Fixture.IsFinished}} mx-finished{{end}}">
       <td class="mx-match">
         {{flag .Fixture.HomeTeam}} <strong>{{.Fixture.HomeTeam}}</strong>
@@ -49,7 +50,7 @@
           {{if .AdvancesTeam}}<div class="bc-adv">+{{.AdvancesTeam}}</div>{{end}}
           {{if .Bet.Points}}
             <div class="bc-pts">{{deref .Bet.Points}} pts</div>
-          {{else if $.Fixture.IsFinished}}
+          {{else if $row.Fixture.IsFinished}}
             <div class="bc-pts text-muted">—</div>
           {{end}}
           {{if .CanEdit}}

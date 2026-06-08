@@ -1,5 +1,8 @@
 {{define "content"}}
-<h2>Group Winner Bets</h2>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+  <h2 style="margin:0">Group Winner Bets</h2>
+  <a href="{{url "/fixtures/matrix"}}#groups" class="outline small">🔲 Matrix view</a>
+</div>
 
 {{if .IsLocked}}
 <p class="flash-error">Bets are locked (deadline: {{.Deadline.Format "02 Jan 2006 15:04 UTC"}}).</p>
@@ -25,7 +28,7 @@
         {{end}}
       </select>
       {{if .UserBet}}
-        <small>Current: <strong>{{.UserBet.TeamName}}</strong>{{if .UserBet.Points}} · {{deref .UserBet.Points}} pts{{end}}</small>
+        <small>Current: {{flag .UserBet.TeamName}} <strong>{{.UserBet.TeamName}}</strong>{{if .UserBet.Points}} · {{deref .UserBet.Points}} pts{{end}}</small>
       {{end}}
     </label>
     {{else}}

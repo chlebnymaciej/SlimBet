@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"sort"
 	"time"
 
 	"tournament-games/internal/db"
@@ -13,11 +14,28 @@ type TournamentPageData struct {
 	Bet          *model.TournamentBet
 	IsLocked     bool
 	Deadline     time.Time
+	Teams        []string
 	Scorers      []string
 	Points1st    int
 	Points2nd    int
 	Points3rd    int
 	PointsScorer int
+}
+
+func (a *App) loadTeams() []string {
+	groupTeams, _ := db.GetGroupTeams(a.DB)
+	seen := make(map[string]bool)
+	var teams []string
+	for _, ts := range groupTeams {
+		for _, t := range ts {
+			if !seen[t] {
+				seen[t] = true
+				teams = append(teams, t)
+			}
+		}
+	}
+	sort.Strings(teams)
+	return teams
 }
 
 func (a *App) handleTournamentGet(w http.ResponseWriter, r *http.Request) {
@@ -37,6 +55,7 @@ func (a *App) handleTournamentGet(w http.ResponseWriter, r *http.Request) {
 		Bet:          bet,
 		IsLocked:     locked,
 		Deadline:     deadline,
+		Teams:        a.loadTeams(),
 		Scorers:      scorers,
 		Points1st:    pts1st,
 		Points2nd:    pts2nd,
@@ -49,12 +68,14 @@ func (a *App) handleTournamentPost(w http.ResponseWriter, r *http.Request) {
 	deadline := a.Cfg.TournamentBetDeadline
 	pts1st, pts2nd, pts3rd, ptsScorer := a.Cfg.GetTournamentPoints()
 	scorers, _ := db.GetScorerCandidates(a.DB)
+	teams := a.loadTeams()
 
 	if !deadline.IsZero() && time.Now().UTC().After(deadline) {
 		a.Tmpl.Page(w, "tournament_bets", TournamentPageData{
 			BaseData:     a.baseData(r),
 			IsLocked:     true,
 			Deadline:     deadline,
+			Teams:        teams,
 			Scorers:      scorers,
 			Points1st:    pts1st,
 			Points2nd:    pts2nd,
@@ -93,6 +114,7 @@ func (a *App) handleTournamentPost(w http.ResponseWriter, r *http.Request) {
 		Bet:          saved,
 		IsLocked:     false,
 		Deadline:     deadline,
+		Teams:        teams,
 		Scorers:      scorers,
 		Points1st:    pts1st,
 		Points2nd:    pts2nd,

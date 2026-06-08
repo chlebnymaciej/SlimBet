@@ -4,7 +4,7 @@
   <a href="{{url "/fixtures"}}" class="outline small">📋 List view</a>
 </div>
 
-<div x-data="{tab:'fixtures'}">
+<div x-data="{tab: location.hash ? location.hash.slice(1) : 'fixtures'}">
 
   <div class="matrix-tabs">
     <button @click="tab='fixtures'" :class="{'tab-active': tab==='fixtures'}">⚽ Fixtures</button>
@@ -106,7 +106,7 @@
           {{range .Cells}}
           <td class="bet-cell {{.CellClass}}">
             {{if .TeamName}}
-              <div class="bc-score">{{.TeamName}}</div>
+              <div class="bc-score">{{flag .TeamName}} {{.TeamName}}</div>
               {{if .CanEdit}}<a href="{{url "/groups"}}" class="bc-edit" title="Edit">✏️</a>{{end}}
             {{else}}
               <div class="bc-miss">—</div>
@@ -150,7 +150,7 @@
           {{range .Cells}}
           <td class="bet-cell {{.CellClass}}">
             {{if .Pick}}
-              <div class="bc-score">{{.Pick}}</div>
+              <div class="bc-score">{{flag .Pick}} {{.Pick}}</div>
               {{if .CanEdit}}<a href="{{url "/tournament"}}" class="bc-edit" title="Edit">✏️</a>{{end}}
             {{else}}
               <div class="bc-miss">—</div>

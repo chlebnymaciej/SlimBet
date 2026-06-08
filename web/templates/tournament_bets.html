@@ -1,5 +1,8 @@
 {{define "content"}}
-<h2>Tournament Bets</h2>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+  <h2 style="margin:0">Tournament Bets</h2>
+  <a href="{{url "/fixtures/matrix"}}#tournament" class="outline small">🔲 Matrix view</a>
+</div>
 
 {{if .IsLocked}}
 <p class="flash-error">Bets are locked (deadline: {{.Deadline.Format "02 Jan 2006 15:04 UTC"}}).</p>
@@ -14,20 +17,47 @@
     <div class="grid">
       <label>
         🥇 1st Place (Champion) — <strong>{{.Points1st}} pts</strong>
+        {{if .Teams}}
+        <select name="first_place" {{if .IsLocked}}disabled{{end}}>
+          <option value="">— select team —</option>
+          {{range .Teams}}
+          <option value="{{.}}"{{if and $.Bet (eq $.Bet.FirstPlace .)}} selected{{end}}>{{.}}</option>
+          {{end}}
+        </select>
+        {{else}}
         <input type="text" name="first_place" placeholder="Team name"
           value="{{if .Bet}}{{.Bet.FirstPlace}}{{end}}" {{if .IsLocked}}disabled{{end}} />
+        {{end}}
       </label>
       <label>
         🥈 2nd Place — <strong>{{.Points2nd}} pts</strong>
+        {{if .Teams}}
+        <select name="second_place" {{if .IsLocked}}disabled{{end}}>
+          <option value="">— select team —</option>
+          {{range .Teams}}
+          <option value="{{.}}"{{if and $.Bet (eq $.Bet.SecondPlace .)}} selected{{end}}>{{.}}</option>
+          {{end}}
+        </select>
+        {{else}}
         <input type="text" name="second_place" placeholder="Team name"
           value="{{if .Bet}}{{.Bet.SecondPlace}}{{end}}" {{if .IsLocked}}disabled{{end}} />
+        {{end}}
       </label>
     </div>
     <div class="grid">
       <label>
         🥉 3rd Place — <strong>{{.Points3rd}} pts</strong>
+        {{if .Teams}}
+        <select name="third_place" {{if .IsLocked}}disabled{{end}}>
+          <option value="">— select team —</option>
+          {{range .Teams}}
+          <option value="{{.}}"{{if and $.Bet (eq $.Bet.ThirdPlace .)}} selected{{end}}>{{.}}</option>
+          {{end}}
+        </select>
+        {{else}}
         <input type="text" name="third_place" placeholder="Team name"
           value="{{if .Bet}}{{.Bet.ThirdPlace}}{{end}}" {{if .IsLocked}}disabled{{end}} />
+        {{end}}
       </label>
       <label>
         ⚽ Top Scorer — <strong>{{.PointsScorer}} pts</strong>

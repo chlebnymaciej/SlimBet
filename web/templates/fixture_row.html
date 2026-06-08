@@ -41,7 +41,7 @@
       {{end}}
       {{if .UserBet.AdvancesPick}}
       <span class="advances-pick">
-        adv: {{if eq .UserBet.AdvancesPick "HOME"}}{{.Fixture.HomeTeam}}{{else}}{{.Fixture.AwayTeam}}{{end}}
+        adv: {{if eq .UserBet.AdvancesPick "HOME"}}{{flag .Fixture.HomeTeam}} {{.Fixture.HomeTeam}}{{else}}{{flag .Fixture.AwayTeam}} {{.Fixture.AwayTeam}}{{end}}
         {{if .UserBet.AdvancesPoints}}
           <span class="points-badge">{{deref .UserBet.AdvancesPoints}} pts</span>
         {{end}}

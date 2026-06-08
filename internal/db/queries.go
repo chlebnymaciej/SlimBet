@@ -309,6 +309,27 @@ func GetBetCountsPerFixture(db *sql.DB) (map[int64]int, error) {
 	return m, rows.Err()
 }
 
+// GetAllGroupBetsMatrix returns map[groupName][userID]*model.GroupBet for the matrix view.
+func GetAllGroupBetsMatrix(db *sql.DB) (map[string]map[int64]*model.GroupBet, error) {
+	rows, err := db.Query("SELECT id, user_id, group_name, team_name, points FROM group_bets")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	m := make(map[string]map[int64]*model.GroupBet)
+	for rows.Next() {
+		gb := &model.GroupBet{}
+		if err := rows.Scan(&gb.ID, &gb.UserID, &gb.GroupName, &gb.TeamName, &gb.Points); err != nil {
+			return nil, err
+		}
+		if m[gb.GroupName] == nil {
+			m[gb.GroupName] = make(map[int64]*model.GroupBet)
+		}
+		m[gb.GroupName][gb.UserID] = gb
+	}
+	return m, rows.Err()
+}
+
 // BetWithUser pairs a bet with the bettor's username.
 type BetWithUser struct {
 	Username       string

@@ -54,15 +54,9 @@ func (s *Scorer) FetchResultsNow() {
 		return
 	}
 
-	log.Printf("cron: fetch-now polling %d fixture(s)", len(candidates))
-	for _, f := range candidates {
-		if err := s.scoreFixture(f.ID); err != nil {
-			log.Printf("cron: fetch-now fixture %d: %v", f.ID, err)
-		}
-		time.Sleep(300 * time.Millisecond)
-	}
+	log.Printf("cron: fetch-now polling %d fixture(s) in bulk", len(candidates))
+	s.bulkFetchAndProcess(candidates, "fetch-now")
 
-	// Also score any already-finished fixtures missing points.
 	finished, err := db.GetUnscoredFinished(s.db)
 	if err != nil {
 		log.Printf("cron: fetch-now get finished: %v", err)
@@ -86,15 +80,9 @@ func (s *Scorer) scoreFinished() {
 		return
 	}
 
-	log.Printf("cron: polling %d fixture(s) for results", len(candidates))
-	for _, f := range candidates {
-		if err := s.scoreFixture(f.ID); err != nil {
-			log.Printf("cron: score fixture %d: %v", f.ID, err)
-		}
-		time.Sleep(300 * time.Millisecond)
-	}
+	log.Printf("cron: polling %d fixture(s) in bulk", len(candidates))
+	s.bulkFetchAndProcess(candidates, "cron")
 
-	// Score fixtures already marked finished in DB but not yet awarded points.
 	finished, err := db.GetUnscoredFinished(s.db)
 	if err != nil {
 		log.Printf("cron: get unscored finished: %v", err)
@@ -107,12 +95,42 @@ func (s *Scorer) scoreFinished() {
 	}
 }
 
-func (s *Scorer) scoreFixture(fixtureID int64) error {
-	item, err := s.client.FetchMatch(fixtureID)
-	if err != nil {
-		return err
+// bulkFetchAndProcess fetches all candidates in one API call and processes results.
+func (s *Scorer) bulkFetchAndProcess(candidates []*model.Fixture, tag string) {
+	if len(candidates) == 0 {
+		return
 	}
 
+	ids := make([]int64, len(candidates))
+	for i, f := range candidates {
+		ids[i] = f.ID
+	}
+
+	items, err := s.client.FetchMatchesByIDs(ids)
+	if err != nil {
+		log.Printf("cron: %s bulk fetch: %v", tag, err)
+		return
+	}
+
+	itemMap := make(map[int64]footballapi.MatchItem, len(items))
+	for _, it := range items {
+		itemMap[it.ID] = it
+	}
+
+	for _, f := range candidates {
+		it, ok := itemMap[f.ID]
+		if !ok {
+			continue
+		}
+		if err := s.processMatchResult(f.ID, &it); err != nil {
+			log.Printf("cron: %s process fixture %d: %v", tag, f.ID, err)
+		}
+	}
+}
+
+// processMatchResult applies a fetched match result to the DB and awards points.
+// No API call — caller provides the already-fetched MatchItem.
+func (s *Scorer) processMatchResult(fixtureID int64, item *footballapi.MatchItem) error {
 	if item.Status != "FINISHED" {
 		return nil
 	}
@@ -125,7 +143,8 @@ func (s *Scorer) scoreFixture(fixtureID int64) error {
 		goalsAway = *item.Score.FullTime.Away
 	}
 
-	if err := db.UpdateFixtureResult(s.db, fixtureID, item.Status, goalsHome, goalsAway, item.Score.Duration, item.Score.Winner); err != nil {
+	if err := db.UpdateFixtureResult(s.db, fixtureID, item.Status, goalsHome, goalsAway,
+		item.Score.Duration, item.Score.Winner); err != nil {
 		return err
 	}
 
@@ -135,6 +154,15 @@ func (s *Scorer) scoreFixture(fixtureID int64) error {
 	}
 
 	return s.awardPoints(fixture)
+}
+
+// scoreFixture fetches a single match and processes it — used only by ScoreOne (admin).
+func (s *Scorer) scoreFixture(fixtureID int64) error {
+	item, err := s.client.FetchMatch(fixtureID)
+	if err != nil {
+		return err
+	}
+	return s.processMatchResult(fixtureID, item)
 }
 
 func (s *Scorer) awardPoints(fixture *model.Fixture) error {
@@ -150,7 +178,6 @@ func (s *Scorer) awardPoints(fixture *model.Fixture) error {
 			log.Printf("cron: update bet %d points: %v", bet.ID, err)
 		}
 
-		// Award advances-pick bonus for knockout matches that went to ET or penalties.
 		if fixture.MatchDuration != "" && fixture.MatchDuration != "REGULAR" && bet.AdvancesPick != "" {
 			advPts := 0
 			if (bet.AdvancesPick == "HOME" && fixture.MatchWinner == "HOME_TEAM") ||

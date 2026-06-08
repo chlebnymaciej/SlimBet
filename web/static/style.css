@@ -128,6 +128,14 @@ tr.day-header:not(:first-child) td {
 .bets-mini-table td { padding: .15rem .5rem; border: none; }
 .bets-mini-table tbody tr:nth-child(odd) td { background: #fff; }
 
+/* Matrix tabs */
+.matrix-tabs { display:flex; gap:.4rem; margin-bottom:1rem; flex-wrap:wrap; }
+.matrix-tabs button {
+  padding:.3rem .85rem; border-radius:.25rem; font-size:.85rem;
+  border:1px solid #dee2e6; background:#f8f9fa; cursor:pointer; color:inherit; }
+.matrix-tabs button.tab-active { background:#0d6efd; color:#fff; border-color:#0d6efd; }
+.matrix-tabs button:hover:not(.tab-active) { background:#e9ecef; }
+
 /* Matrix view */
 .matrix-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
 .matrix-table thead th {

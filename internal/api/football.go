@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -121,6 +123,38 @@ func (c *Client) FetchScorers(code string, limit int) ([]ScorerItem, error) {
 	}
 
 	return result.Scorers, nil
+}
+
+// FetchMatchesByIDs fetches multiple matches in one API call.
+// GET /v4/matches?ids=id1,id2,...
+func (c *Client) FetchMatchesByIDs(ids []int64) ([]MatchItem, error) {
+	parts := make([]string, len(ids))
+	for i, id := range ids {
+		parts[i] = strconv.FormatInt(id, 10)
+	}
+	url := fmt.Sprintf("%s/matches?ids=%s", c.baseURL, strings.Join(parts, ","))
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("X-Auth-Token", c.apiKey)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("http request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("api returned %d", resp.StatusCode)
+	}
+
+	var result MatchesResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("decode: %w", err)
+	}
+
+	return result.Matches, nil
 }
 
 // FetchMatch fetches a single match by ID for result polling.

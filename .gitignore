@@ -4,3 +4,5 @@ bin/
 *.db-wal
 data/
 appsettings.json
+
+build.sh 

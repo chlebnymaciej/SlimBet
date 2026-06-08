@@ -30,7 +30,7 @@ type Fixture struct {
 }
 
 func (f *Fixture) IsFinished() bool {
-	return f.Status == "FT" || f.Status == "AET" || f.Status == "PEN"
+	return f.Status == "FINISHED"
 }
 
 func (f *Fixture) BetDeadline() time.Time {

@@ -79,3 +79,42 @@
 
 details { margin-bottom: 1.5rem; }
 details summary { cursor: pointer; padding: .5rem 0; }
+
+/* Day header rows */
+.day-header td {
+  background: #f8f9fa;
+  color: #495057;
+  font-size: .85rem;
+  font-weight: 600;
+  padding: .6rem 1rem .4rem;
+  letter-spacing: .03em;
+}
+tr.day-header:not(:first-child) td {
+  padding-top: 2rem;
+  border-top: 2px solid #dee2e6;
+}
+
+/* Group label column */
+.group-cell {
+  white-space: nowrap;
+  width: 3rem;
+  text-align: center;
+}
+.group-label {
+  display: inline-block;
+  font-size: .72rem;
+  font-weight: 700;
+  color: #495057;
+  background: #e9ecef;
+  border-radius: .25rem;
+  padding: .1rem .4rem;
+  min-width: 1.4rem;
+  text-align: center;
+}
+
+/* vs separator */
+.vs-sep {
+  color: #adb5bd;
+  font-size: .8rem;
+  margin: 0 .25rem;
+}

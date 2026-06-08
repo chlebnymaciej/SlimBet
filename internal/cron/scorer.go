@@ -45,6 +45,36 @@ func (s *Scorer) ScoreAll() {
 	s.scoreFinished()
 }
 
+// FetchResultsNow polls the API for ALL fixtures that have kicked off,
+// with no time buffer — use from admin panel for immediate result fetching.
+func (s *Scorer) FetchResultsNow() {
+	candidates, err := db.GetStartedUnscored(s.db)
+	if err != nil {
+		log.Printf("cron: fetch-now get candidates: %v", err)
+		return
+	}
+
+	log.Printf("cron: fetch-now polling %d fixture(s)", len(candidates))
+	for _, f := range candidates {
+		if err := s.scoreFixture(f.ID); err != nil {
+			log.Printf("cron: fetch-now fixture %d: %v", f.ID, err)
+		}
+		time.Sleep(300 * time.Millisecond)
+	}
+
+	// Also score any already-finished fixtures missing points.
+	finished, err := db.GetUnscoredFinished(s.db)
+	if err != nil {
+		log.Printf("cron: fetch-now get finished: %v", err)
+		return
+	}
+	for _, f := range finished {
+		if err := s.awardPoints(f); err != nil {
+			log.Printf("cron: fetch-now award points %d: %v", f.ID, err)
+		}
+	}
+}
+
 func (s *Scorer) ScoreOne(fixtureID int64) error {
 	return s.scoreFixture(fixtureID)
 }
@@ -78,34 +108,24 @@ func (s *Scorer) scoreFinished() {
 }
 
 func (s *Scorer) scoreFixture(fixtureID int64) error {
-	item, err := s.client.FetchFixture(fixtureID)
+	item, err := s.client.FetchMatch(fixtureID)
 	if err != nil {
 		return err
 	}
 
-	status := item.Fixture.Status.Short
-	if status != "FT" && status != "AET" && status != "PEN" {
+	if item.Status != "FINISHED" {
 		return nil
 	}
 
 	goalsHome, goalsAway := 0, 0
-	if status == "AET" || status == "PEN" {
-		if item.Score.Fulltime.Home != nil {
-			goalsHome = *item.Score.Fulltime.Home
-		}
-		if item.Score.Fulltime.Away != nil {
-			goalsAway = *item.Score.Fulltime.Away
-		}
-	} else {
-		if item.Goals.Home != nil {
-			goalsHome = *item.Goals.Home
-		}
-		if item.Goals.Away != nil {
-			goalsAway = *item.Goals.Away
-		}
+	if item.Score.FullTime.Home != nil {
+		goalsHome = *item.Score.FullTime.Home
+	}
+	if item.Score.FullTime.Away != nil {
+		goalsAway = *item.Score.FullTime.Away
 	}
 
-	if err := db.UpdateFixtureResult(s.db, fixtureID, status, goalsHome, goalsAway); err != nil {
+	if err := db.UpdateFixtureResult(s.db, fixtureID, item.Status, goalsHome, goalsAway); err != nil {
 		return err
 	}
 

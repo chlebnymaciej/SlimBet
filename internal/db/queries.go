@@ -101,8 +101,7 @@ func GetUnscored(db *sql.DB) ([]*model.Fixture, error) {
 		       goals_home, goals_away, scores_fetched
 		FROM fixtures
 		WHERE scores_fetched = 0
-		  AND kickoff_at < datetime('now', '-115 minutes')
-		  AND status NOT IN ('FT','AET','PEN','CANC')
+		AND status NOT IN ('FINISHED','CANCELLED')
 		ORDER BY kickoff_at ASC`)
 	if err != nil {
 		return nil, err
@@ -118,7 +117,26 @@ func GetUnscoredFinished(db *sql.DB) ([]*model.Fixture, error) {
 		       goals_home, goals_away, scores_fetched
 		FROM fixtures
 		WHERE scores_fetched = 0
-		  AND status IN ('FT','AET','PEN')
+		  AND status IN ('FINISHED')
+		ORDER BY kickoff_at ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanFixtures(rows)
+}
+
+// GetStartedUnscored returns fixtures that have kicked off and aren't scored yet,
+// with no time buffer — used by the admin "Fetch results NOW" action.
+func GetStartedUnscored(db *sql.DB) ([]*model.Fixture, error) {
+	rows, err := db.Query(`
+		SELECT id, api_id, home_team, away_team, home_team_id, away_team_id,
+		       kickoff_at, round, group_name, venue, status,
+		       goals_home, goals_away, scores_fetched
+		FROM fixtures
+		WHERE scores_fetched = 0
+		  AND kickoff_at < datetime('now')
+		  AND status NOT IN ('FINISHED','CANCELLED','POSTPONED')
 		ORDER BY kickoff_at ASC`)
 	if err != nil {
 		return nil, err

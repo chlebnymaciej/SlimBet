@@ -16,7 +16,7 @@ type Client struct {
 func New(apiKey string) *Client {
 	return &Client{
 		apiKey:  apiKey,
-		baseURL: "https://v3.football.api-sports.io",
+		baseURL: "https://api.football-data.org/v4",
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
@@ -25,78 +25,42 @@ func New(apiKey string) *Client {
 
 // ── Response types ────────────────────────────────────────────────────────────
 
-type FixturesResponse struct {
-	Response []FixtureItem `json:"response"`
-	Errors   interface{}   `json:"errors"`
+type MatchesResponse struct {
+	Matches []MatchItem `json:"matches"`
 }
 
-type FixtureItem struct {
-	Fixture struct {
-		ID        int64  `json:"id"`
-		Date      string `json:"date"`
-		Timestamp int64  `json:"timestamp"`
-		Status    struct {
-			Short   string `json:"short"`
-			Long    string `json:"long"`
-			Elapsed *int   `json:"elapsed"`
-		} `json:"status"`
-		Venue struct {
-			Name string `json:"name"`
-			City string `json:"city"`
-		} `json:"venue"`
-	} `json:"fixture"`
-	League struct {
-		ID    int    `json:"id"`
-		Round string `json:"round"`
-		Group string `json:"group"`
-	} `json:"league"`
-	Teams struct {
-		Home struct {
-			ID   int64  `json:"id"`
-			Name string `json:"name"`
-		} `json:"home"`
-		Away struct {
-			ID   int64  `json:"id"`
-			Name string `json:"name"`
-		} `json:"away"`
-	} `json:"teams"`
-	Goals struct {
-		Home *int `json:"home"`
-		Away *int `json:"away"`
-	} `json:"goals"`
+type MatchItem struct {
+	ID      int64  `json:"id"`
+	UTCDate string `json:"utcDate"` // RFC3339, e.g. "2026-06-11T18:00:00Z"
+	Status  string `json:"status"`  // SCHEDULED, IN_PLAY, PAUSED, FINISHED, POSTPONED, CANCELLED
+	Stage   string `json:"stage"`   // GROUP_STAGE, ROUND_OF_32, QUARTER_FINALS, etc.
+	Group   string `json:"group"`   // GROUP_A … GROUP_L, empty for knockout rounds
+	HomeTeam struct {
+		ID   int64  `json:"id"`
+		Name string `json:"name"`
+	} `json:"homeTeam"`
+	AwayTeam struct {
+		ID   int64  `json:"id"`
+		Name string `json:"name"`
+	} `json:"awayTeam"`
 	Score struct {
-		Fulltime struct {
+		Winner   string `json:"winner"`   // HOME_TEAM, AWAY_TEAM, DRAW, or empty
+		Duration string `json:"duration"` // REGULAR, EXTRA_TIME, PENALTY_SHOOTOUT
+		FullTime struct {
 			Home *int `json:"home"`
 			Away *int `json:"away"`
-		} `json:"fulltime"`
+		} `json:"fullTime"`
 	} `json:"score"`
 }
 
-// FetchFixtures fetches all fixtures for a given league and season.
-func (c *Client) FetchFixtures(leagueID, season int) ([]FixtureItem, error) {
-	url := fmt.Sprintf("%s/fixtures?league=%d&season=%d", c.baseURL, leagueID, season)
-	return c.fetchFixtures(url)
-}
-
-// FetchFixture fetches a single fixture by API ID (for result polling).
-func (c *Client) FetchFixture(id int64) (*FixtureItem, error) {
-	url := fmt.Sprintf("%s/fixtures?id=%d", c.baseURL, id)
-	items, err := c.fetchFixtures(url)
-	if err != nil {
-		return nil, err
-	}
-	if len(items) == 0 {
-		return nil, fmt.Errorf("fixture %d not found", id)
-	}
-	return &items[0], nil
-}
-
-func (c *Client) fetchFixtures(url string) ([]FixtureItem, error) {
+// FetchMatches fetches all matches for a competition (e.g. "WC" for World Cup).
+func (c *Client) FetchMatches(competitionCode string) ([]MatchItem, error) {
+	url := fmt.Sprintf("%s/competitions/%s/matches", c.baseURL, competitionCode)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("x-apisports-key", c.apiKey)
+	req.Header.Set("X-Auth-Token", c.apiKey)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -108,10 +72,37 @@ func (c *Client) fetchFixtures(url string) ([]FixtureItem, error) {
 		return nil, fmt.Errorf("api returned %d", resp.StatusCode)
 	}
 
-	var result FixturesResponse
+	var result MatchesResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("decode: %w", err)
 	}
 
-	return result.Response, nil
+	return result.Matches, nil
+}
+
+// FetchMatch fetches a single match by ID for result polling.
+func (c *Client) FetchMatch(id int64) (*MatchItem, error) {
+	url := fmt.Sprintf("%s/matches/%d", c.baseURL, id)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("X-Auth-Token", c.apiKey)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("http request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("api returned %d", resp.StatusCode)
+	}
+
+	var item MatchItem
+	if err := json.NewDecoder(resp.Body).Decode(&item); err != nil {
+		return nil, fmt.Errorf("decode: %w", err)
+	}
+
+	return &item, nil
 }

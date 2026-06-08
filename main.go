@@ -50,7 +50,7 @@ func main() {
 	apiClient := footballapi.New(cfg.APIKey)
 
 	if cfg.APIKey != "" {
-		if err := setup.PrefetchFixtures(database, apiClient, cfg.LeagueID, cfg.Season, false); err != nil {
+		if err := setup.PrefetchFixtures(database, apiClient, cfg.CompetitionCode, false); err != nil {
 			log.Printf("setup: prefetch fixtures: %v", err)
 		}
 	} else {

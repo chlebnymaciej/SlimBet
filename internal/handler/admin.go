@@ -13,6 +13,7 @@ import (
 type ScorerInterface interface {
 	ScoreAll()
 	ScoreOne(fixtureID int64) error
+	FetchResultsNow()
 }
 
 type AdminPageData struct {
@@ -44,7 +45,7 @@ func (a *App) handleAdminGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) handleAdminSetup(w http.ResponseWriter, r *http.Request) {
-	if err := setup.PrefetchFixtures(a.DB, a.API, a.Cfg.LeagueID, a.Cfg.Season, true); err != nil {
+	if err := setup.PrefetchFixtures(a.DB, a.API, a.Cfg.CompetitionCode, true); err != nil {
 		count, _ := db.FixtureCount(a.DB)
 		a.Tmpl.Page(w, "admin", AdminPageData{
 			BaseData:     a.baseData(r),
@@ -67,9 +68,29 @@ func (a *App) handleAdminScoreAll(w http.ResponseWriter, r *http.Request) {
 	}
 	count, _ := db.FixtureCount(a.DB)
 	a.Tmpl.Page(w, "admin", AdminPageData{
-		BaseData:     a.baseData(r),
-		FixtureCount: count,
-		Flash:        "Scoring run complete.",
+		BaseData:      a.baseData(r),
+		FixtureCount:  count,
+		PointsExact:   a.Cfg.PointsExact,
+		PointsOutcome: a.Cfg.PointsOutcome,
+		PointsGroup:   a.Cfg.PointsGroupWinner,
+		Deadline:      a.Cfg.TournamentBetDeadline,
+		Flash:         "Scoring run complete.",
+	})
+}
+
+func (a *App) handleAdminFetchResults(w http.ResponseWriter, r *http.Request) {
+	if a.scorer != nil {
+		a.scorer.FetchResultsNow()
+	}
+	count, _ := db.FixtureCount(a.DB)
+	a.Tmpl.Page(w, "admin", AdminPageData{
+		BaseData:      a.baseData(r),
+		FixtureCount:  count,
+		PointsExact:   a.Cfg.PointsExact,
+		PointsOutcome: a.Cfg.PointsOutcome,
+		PointsGroup:   a.Cfg.PointsGroupWinner,
+		Deadline:      a.Cfg.TournamentBetDeadline,
+		Flash:         "Fetched results from API and scored all finished matches.",
 	})
 }
 

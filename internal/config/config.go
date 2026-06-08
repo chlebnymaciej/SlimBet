@@ -16,8 +16,7 @@ type Config struct {
 	PointsOutcome         int       `json:"points_outcome"`
 	PointsGroupWinner     int       `json:"points_group_winner"`
 	TournamentBetDeadline time.Time `json:"tournament_bet_deadline"`
-	LeagueID              int       `json:"league_id"`
-	Season                int       `json:"season"`
+	CompetitionCode       string    `json:"competition_code"`
 	AdminUsername         string    `json:"admin_username"`
 	AdminPassword         string    `json:"admin_password"`
 	SessionSecret         string    `json:"session_secret"`
@@ -33,8 +32,7 @@ func Load(path string) (*Config, error) {
 		PointsExact:       3,
 		PointsOutcome:     1,
 		PointsGroupWinner: 2,
-		LeagueID:          1,
-		Season:            2026,
+		CompetitionCode:   "WC",
 		AdminUsername:     "admin",
 		SessionSecret:     "change-me-to-a-random-32-byte-string!",
 	}

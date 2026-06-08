@@ -25,6 +25,7 @@ type App struct {
 	scorer interface {
 		ScoreAll()
 		ScoreOne(int64) error
+		FetchResultsNow()
 	}
 }
 
@@ -55,6 +56,7 @@ func (a *App) RegisterRoutes(mux *http.ServeMux, staticFS embed.FS) {
 	mux.Handle("POST /admin/setup", requireAdmin(http.HandlerFunc(a.handleAdminSetup)))
 	mux.Handle("POST /admin/score/{id}", requireAdmin(http.HandlerFunc(a.handleAdminScoreOne)))
 	mux.Handle("POST /admin/score-all", requireAdmin(http.HandlerFunc(a.handleAdminScoreAll)))
+	mux.Handle("POST /admin/fetch-results", requireAdmin(http.HandlerFunc(a.handleAdminFetchResults)))
 	mux.Handle("POST /admin/config", requireAdmin(http.HandlerFunc(a.handleAdminConfig)))
 }
 
@@ -118,6 +120,7 @@ var funcMap = template.FuncMap{
 		}
 		return fmt.Sprint(*p)
 	},
+	"flag": teamFlag,
 }
 
 func LoadTemplates(fs embed.FS) (*TemplateSet, error) {

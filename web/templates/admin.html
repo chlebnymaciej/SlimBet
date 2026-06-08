@@ -14,7 +14,10 @@
   </form>
   <hr />
   <form method="post" action="/admin/score-all" style="margin-top:1rem">
-    <button type="submit">Run scoring on all finished fixtures</button>
+    <button type="submit">Score all finished fixtures (use cached status)</button>
+  </form>
+  <form method="post" action="/admin/fetch-results" style="margin-top:.75rem">
+    <button type="submit" class="contrast">⚡ Fetch results NOW from API (no schedule wait)</button>
   </form>
 </article>
 

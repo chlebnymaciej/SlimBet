@@ -1,0 +1,21 @@
+# WC 2026 Betting App
+#
+# Volume mounts:
+#   appsettings.json — edit on the host, container reads it read-only.
+#   betting_data     — named volume; the DB lives at /data/betting.db inside the container.
+#
+# Before running with Docker set in appsettings.json:
+#   "db_path": "/data/betting.db"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./appsettings.json:/app/appsettings.json:ro
+      - betting_data:/data
+    restart: unless-stopped
+
+volumes:
+  betting_data:

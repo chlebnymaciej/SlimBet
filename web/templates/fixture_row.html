@@ -1,23 +1,32 @@
 {{define "fixture_row"}}
 <tr id="fixture-{{.Fixture.ID}}">
-  <td><strong>{{.Fixture.HomeTeam}}</strong> vs <strong>{{.Fixture.AwayTeam}}</strong></td>
-  <td>{{.Fixture.KickoffAt.Format "02 Jan 15:04"}}</td>
-  <td>
-    {{if .Fixture.IsFinished}}
-      <span class="badge badge-done">{{.Fixture.Status}}</span>
-    {{else if eq .Fixture.Status "1H"}}
-      <span class="badge badge-live">LIVE</span>
-    {{else if eq .Fixture.Status "HT"}}
-      <span class="badge badge-live">HT</span>
-    {{else if eq .Fixture.Status "2H"}}
-      <span class="badge badge-live">LIVE</span>
-    {{else}}
-      <span class="badge badge-ns">{{.Fixture.Status}}</span>
-    {{end}}
+  <td class="group-cell">
+    {{if .Fixture.Group}}<span class="group-label">{{.Fixture.Group}}</span>{{end}}
   </td>
   <td>
+    {{flag .Fixture.HomeTeam}} <strong>{{.Fixture.HomeTeam}}</strong>
+    <span class="vs-sep">vs</span>
+    {{flag .Fixture.AwayTeam}} <strong>{{.Fixture.AwayTeam}}</strong>
+  </td>
+  <td style="white-space:nowrap">{{.Fixture.KickoffAt.Format "02 Jan 15:04"}}</td>
+  <td>
+    {{if .Fixture.IsFinished}}
+      <span class="badge badge-done">FT</span>
+    {{else if eq .Fixture.Status "IN_PLAY"}}
+      <span class="badge badge-live">LIVE</span>
+    {{else if eq .Fixture.Status "PAUSED"}}
+      <span class="badge badge-live">HT</span>
+    {{else if eq .Fixture.Status "POSTPONED"}}
+      <span class="badge badge-ns">PST</span>
+    {{else}}
+      <span class="badge badge-ns">—</span>
+    {{end}}
+  </td>
+  <td style="white-space:nowrap">
     {{if and .Fixture.GoalsHome .Fixture.GoalsAway}}
-      {{deref .Fixture.GoalsHome}} – {{deref .Fixture.GoalsAway}}
+      <strong>{{deref .Fixture.GoalsHome}} – {{deref .Fixture.GoalsAway}}</strong>
+    {{else if .Fixture.IsFinished}}
+      <strong>0 – 0</strong>
     {{else}}
       —
     {{end}}

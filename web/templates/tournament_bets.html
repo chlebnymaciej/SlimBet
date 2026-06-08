@@ -13,33 +13,43 @@
   <form method="post" action="/tournament" {{if .IsLocked}}style="opacity:.6;pointer-events:none"{{end}}>
     <div class="grid">
       <label>
-        🥇 1st Place (Champion)
+        🥇 1st Place (Champion) — <strong>{{.Points1st}} pts</strong>
         <input type="text" name="first_place" placeholder="Team name"
           value="{{if .Bet}}{{.Bet.FirstPlace}}{{end}}" {{if .IsLocked}}disabled{{end}} />
       </label>
       <label>
-        🥈 2nd Place
+        🥈 2nd Place — <strong>{{.Points2nd}} pts</strong>
         <input type="text" name="second_place" placeholder="Team name"
           value="{{if .Bet}}{{.Bet.SecondPlace}}{{end}}" {{if .IsLocked}}disabled{{end}} />
       </label>
     </div>
     <div class="grid">
       <label>
-        🥉 3rd Place
+        🥉 3rd Place — <strong>{{.Points3rd}} pts</strong>
         <input type="text" name="third_place" placeholder="Team name"
           value="{{if .Bet}}{{.Bet.ThirdPlace}}{{end}}" {{if .IsLocked}}disabled{{end}} />
       </label>
       <label>
-        ⚽ Top Scorer
-        <input type="text" name="top_scorer" placeholder="Player name"
+        ⚽ Top Scorer — <strong>{{.PointsScorer}} pts</strong>
+        {{if .Scorers}}
+        <select name="top_scorer" {{if .IsLocked}}disabled{{end}}>
+          <option value="">— select player —</option>
+          {{range .Scorers}}
+          <option value="{{.}}"{{if and $.Bet (eq $.Bet.TopScorer .)}} selected{{end}}>{{.}}</option>
+          {{end}}
+        </select>
+        {{else}}
+        <input type="text" name="top_scorer" placeholder="Player name (load scorers in admin)"
           value="{{if .Bet}}{{.Bet.TopScorer}}{{end}}" {{if .IsLocked}}disabled{{end}} />
+        <small class="text-muted">Admin has not loaded scorer candidates yet.</small>
+        {{end}}
       </label>
     </div>
     {{if not .IsLocked}}
     <button type="submit">Save tournament bets</button>
     {{end}}
     {{if and .Bet .Bet.Points}}
-    <p>Points awarded: <strong>{{deref .Bet.Points}}</strong></p>
+    <p style="margin-top:1rem">Points awarded: <strong>{{deref .Bet.Points}}</strong></p>
     {{end}}
   </form>
 </article>

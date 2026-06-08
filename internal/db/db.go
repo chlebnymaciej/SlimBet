@@ -58,5 +58,17 @@ func runMigrations(db *sql.DB, fs embed.FS) error {
 		}
 	}
 
+	var v3 int
+	_ = db.QueryRow("SELECT COUNT(*) FROM schema_migrations WHERE version=3").Scan(&v3)
+	if v3 == 0 {
+		data, err := fs.ReadFile("migrations/003_tournament.sql")
+		if err != nil {
+			return fmt.Errorf("read migration 003: %w", err)
+		}
+		if _, err = db.Exec(string(data)); err != nil {
+			return fmt.Errorf("apply migration 003: %w", err)
+		}
+	}
+
 	return nil
 }

@@ -10,9 +10,14 @@ import (
 
 type TournamentPageData struct {
 	BaseData
-	Bet      *model.TournamentBet
-	IsLocked bool
-	Deadline time.Time
+	Bet          *model.TournamentBet
+	IsLocked     bool
+	Deadline     time.Time
+	Scorers      []string
+	Points1st    int
+	Points2nd    int
+	Points3rd    int
+	PointsScorer int
 }
 
 func (a *App) handleTournamentGet(w http.ResponseWriter, r *http.Request) {
@@ -22,24 +27,39 @@ func (a *App) handleTournamentGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	scorers, _ := db.GetScorerCandidates(a.DB)
 	deadline := a.Cfg.TournamentBetDeadline
 	locked := !deadline.IsZero() && time.Now().UTC().After(deadline)
+	pts1st, pts2nd, pts3rd, ptsScorer := a.Cfg.GetTournamentPoints()
 
 	a.Tmpl.Page(w, "tournament_bets", TournamentPageData{
-		BaseData: a.baseData(r),
-		Bet:      bet,
-		IsLocked: locked,
-		Deadline: deadline,
+		BaseData:     a.baseData(r),
+		Bet:          bet,
+		IsLocked:     locked,
+		Deadline:     deadline,
+		Scorers:      scorers,
+		Points1st:    pts1st,
+		Points2nd:    pts2nd,
+		Points3rd:    pts3rd,
+		PointsScorer: ptsScorer,
 	})
 }
 
 func (a *App) handleTournamentPost(w http.ResponseWriter, r *http.Request) {
 	deadline := a.Cfg.TournamentBetDeadline
+	pts1st, pts2nd, pts3rd, ptsScorer := a.Cfg.GetTournamentPoints()
+	scorers, _ := db.GetScorerCandidates(a.DB)
+
 	if !deadline.IsZero() && time.Now().UTC().After(deadline) {
 		a.Tmpl.Page(w, "tournament_bets", TournamentPageData{
-			BaseData: a.baseData(r),
-			IsLocked: true,
-			Deadline: deadline,
+			BaseData:     a.baseData(r),
+			IsLocked:     true,
+			Deadline:     deadline,
+			Scorers:      scorers,
+			Points1st:    pts1st,
+			Points2nd:    pts2nd,
+			Points3rd:    pts3rd,
+			PointsScorer: ptsScorer,
 			Bet: &model.TournamentBet{
 				FirstPlace:  r.FormValue("first_place"),
 				SecondPlace: r.FormValue("second_place"),
@@ -70,8 +90,13 @@ func (a *App) handleTournamentPost(w http.ResponseWriter, r *http.Request) {
 			IsAdmin:  a.isAdmin(r),
 			Flash:    "Tournament bets saved!",
 		},
-		Bet:      saved,
-		IsLocked: false,
-		Deadline: deadline,
+		Bet:          saved,
+		IsLocked:     false,
+		Deadline:     deadline,
+		Scorers:      scorers,
+		Points1st:    pts1st,
+		Points2nd:    pts2nd,
+		Points3rd:    pts3rd,
+		PointsScorer: ptsScorer,
 	})
 }

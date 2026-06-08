@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	footballapi "tournament-games/internal/api"
 	"tournament-games/internal/model"
 )
 
@@ -501,4 +502,111 @@ func boolToInt(b bool) int {
 		return 1
 	}
 	return 0
+}
+
+// ── Top scorer candidates ─────────────────────────────────────────────────────
+
+func RefreshScorerCandidates(db *sql.DB, items []footballapi.ScorerItem) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec("DELETE FROM top_scorer_candidates"); err != nil {
+		return err
+	}
+	for _, item := range items {
+		if item.Player.Name == "" {
+			continue
+		}
+		if _, err := tx.Exec(`
+			INSERT OR REPLACE INTO top_scorer_candidates (player_name, team_name, goals, updated_at)
+			VALUES (?, ?, ?, datetime('now'))`,
+			item.Player.Name, item.Team.Name, item.Goals,
+		); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
+func GetScorerCandidates(db *sql.DB) ([]string, error) {
+	rows, err := db.Query(
+		"SELECT player_name FROM top_scorer_candidates ORDER BY goals DESC, player_name ASC")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var names []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		names = append(names, name)
+	}
+	return names, rows.Err()
+}
+
+func GetScorerCount(db *sql.DB) (int, error) {
+	var n int
+	err := db.QueryRow("SELECT COUNT(*) FROM top_scorer_candidates").Scan(&n)
+	return n, err
+}
+
+// ── Tournament results ────────────────────────────────────────────────────────
+
+type TournamentResults struct {
+	Champion, RunnerUp, ThirdPlace, TopScorer string
+}
+
+func GetTournamentResults(db *sql.DB) (TournamentResults, error) {
+	var r TournamentResults
+	err := db.QueryRow(
+		"SELECT champion, runner_up, third_place, top_scorer FROM tournament_results WHERE id=1",
+	).Scan(&r.Champion, &r.RunnerUp, &r.ThirdPlace, &r.TopScorer)
+	if err == sql.ErrNoRows {
+		return r, nil
+	}
+	return r, err
+}
+
+// SaveAndScoreTournament saves actual results and awards points to all users.
+// Returns the number of bets scored.
+func SaveAndScoreTournament(db *sql.DB, r TournamentResults, pts1st, pts2nd, pts3rd, ptsScorer int) (int, error) {
+	_, err := db.Exec(`
+		UPDATE tournament_results SET champion=?, runner_up=?, third_place=?, top_scorer=? WHERE id=1`,
+		r.Champion, r.RunnerUp, r.ThirdPlace, r.TopScorer,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	bets, err := GetAllTournamentBets(db)
+	if err != nil {
+		return 0, err
+	}
+
+	count := 0
+	for _, bet := range bets {
+		total := 0
+		if r.Champion != "" && bet.FirstPlace == r.Champion {
+			total += pts1st
+		}
+		if r.RunnerUp != "" && bet.SecondPlace == r.RunnerUp {
+			total += pts2nd
+		}
+		if r.ThirdPlace != "" && bet.ThirdPlace == r.ThirdPlace {
+			total += pts3rd
+		}
+		if r.TopScorer != "" && bet.TopScorer == r.TopScorer {
+			total += ptsScorer
+		}
+		if err := UpdateTournamentBetPoints(db, bet.UserID, total); err != nil {
+			return count, err
+		}
+		count++
+	}
+	return count, nil
 }

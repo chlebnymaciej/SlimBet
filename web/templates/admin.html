@@ -24,26 +24,46 @@
 <article>
   <h3>Points Config</h3>
   <form method="post" action="/admin/config">
-    <label>
-      Exact score points (X)
-      <input type="number" name="points_exact" min="0" value="{{.PointsExact}}" />
-    </label>
-    <label>
-      Correct outcome points (Y)
-      <input type="number" name="points_outcome" min="0" value="{{.PointsOutcome}}" />
-    </label>
-    <label>
-      Group winner points (G)
-      <input type="number" name="points_group" min="0" value="{{.PointsGroup}}" />
-    </label>
-    <label>
-      Tournament bet deadline
-      <input type="datetime-local" name="tournament_deadline"
-        value="{{.Deadline.Format "2006-01-02T15:04"}}" />
-    </label>
+    <div class="grid">
+      <label>Exact score (X)<input type="number" name="points_exact" min="0" value="{{.PointsExact}}" /></label>
+      <label>Correct outcome (Y)<input type="number" name="points_outcome" min="0" value="{{.PointsOutcome}}" /></label>
+    </div>
+    <div class="grid">
+      <label>Group winner (G)<input type="number" name="points_group" min="0" value="{{.PointsGroup}}" /></label>
+      <label>Tournament deadline<input type="datetime-local" name="tournament_deadline" value="{{.Deadline.Format "2006-01-02T15:04"}}" /></label>
+    </div>
+    <p style="margin:.5rem 0 .25rem;font-weight:600;font-size:.9rem">Tournament placing points</p>
+    <div class="grid">
+      <label>🥇 1st place<input type="number" name="points_1st" min="0" value="{{.Points1st}}" /></label>
+      <label>🥈 2nd place<input type="number" name="points_2nd" min="0" value="{{.Points2nd}}" /></label>
+      <label>🥉 3rd place<input type="number" name="points_3rd" min="0" value="{{.Points3rd}}" /></label>
+      <label>⚽ Top scorer<input type="number" name="points_scorer" min="0" value="{{.PointsScorer}}" /></label>
+    </div>
     <button type="submit">Save config</button>
   </form>
 </article>
 
 </div>
+
+<article>
+  <h3>Tournament Scoring</h3>
+  <p>Scorer candidates loaded: <strong>{{.ScorerCount}}</strong></p>
+  <form method="post" action="/admin/refresh-scorers">
+    <button type="submit" class="outline">Refresh top scorers from API</button>
+  </form>
+  <hr style="margin:1.5rem 0" />
+  <p>Set actual results below and score all user bets in one click.</p>
+  <form method="post" action="/admin/score-tournament">
+    <div class="grid">
+      <label>🥇 Champion<input type="text" name="champion" placeholder="Team name" value="{{.TResults.Champion}}" /></label>
+      <label>🥈 2nd Place<input type="text" name="runner_up" placeholder="Team name" value="{{.TResults.RunnerUp}}" /></label>
+    </div>
+    <div class="grid">
+      <label>🥉 3rd Place<input type="text" name="third_place" placeholder="Team name" value="{{.TResults.ThirdPlace}}" /></label>
+      <label>⚽ Top Scorer<input type="text" name="top_scorer" placeholder="Player name" value="{{.TResults.TopScorer}}" /></label>
+    </div>
+    <button type="submit">Score all tournament bets</button>
+  </form>
+</article>
+
 {{end}}

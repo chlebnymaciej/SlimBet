@@ -80,6 +80,49 @@ func (c *Client) FetchMatches(competitionCode string) ([]MatchItem, error) {
 	return result.Matches, nil
 }
 
+// ── Scorers ───────────────────────────────────────────────────────────────────
+
+type ScorersResponse struct {
+	Scorers []ScorerItem `json:"scorers"`
+}
+
+type ScorerItem struct {
+	Player struct {
+		Name string `json:"name"`
+	} `json:"player"`
+	Team struct {
+		Name string `json:"name"`
+	} `json:"team"`
+	Goals int `json:"goals"`
+}
+
+// FetchScorers fetches the top scorers for a competition.
+func (c *Client) FetchScorers(code string, limit int) ([]ScorerItem, error) {
+	url := fmt.Sprintf("%s/competitions/%s/scorers?limit=%d", c.baseURL, code, limit)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("X-Auth-Token", c.apiKey)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("http request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("api returned %d", resp.StatusCode)
+	}
+
+	var result ScorersResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("decode: %w", err)
+	}
+
+	return result.Scorers, nil
+}
+
 // FetchMatch fetches a single match by ID for result polling.
 func (c *Client) FetchMatch(id int64) (*MatchItem, error) {
 	url := fmt.Sprintf("%s/matches/%d", c.baseURL, id)

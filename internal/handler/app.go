@@ -57,6 +57,8 @@ func (a *App) RegisterRoutes(mux *http.ServeMux, staticFS embed.FS) {
 	mux.Handle("POST /admin/score/{id}", requireAdmin(http.HandlerFunc(a.handleAdminScoreOne)))
 	mux.Handle("POST /admin/score-all", requireAdmin(http.HandlerFunc(a.handleAdminScoreAll)))
 	mux.Handle("POST /admin/fetch-results", requireAdmin(http.HandlerFunc(a.handleAdminFetchResults)))
+	mux.Handle("POST /admin/refresh-scorers", requireAdmin(http.HandlerFunc(a.handleAdminRefreshScorers)))
+	mux.Handle("POST /admin/score-tournament", requireAdmin(http.HandlerFunc(a.handleAdminScoreTournament)))
 	mux.Handle("POST /admin/config", requireAdmin(http.HandlerFunc(a.handleAdminConfig)))
 }
 

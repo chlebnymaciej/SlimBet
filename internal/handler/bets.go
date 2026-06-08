@@ -16,9 +16,10 @@ type BetFormData struct {
 }
 
 type FixtureRowData struct {
-	Fixture    *model.Fixture
-	UserBet    *model.Bet
-	IsBettable bool
+	Fixture       *model.Fixture
+	UserBet       *model.Bet
+	IsBettable    bool
+	TotalBetCount int
 }
 
 func (a *App) handleBetForm(w http.ResponseWriter, r *http.Request) {
@@ -91,9 +92,11 @@ func (a *App) handleBetSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	bet, _ := db.GetBet(a.DB, userID, fixtureID)
+	counts, _ := db.GetBetCountsPerFixture(a.DB)
 	a.Tmpl.Partial(w, "fixture_row", FixtureRowData{
-		Fixture:    fixture,
-		UserBet:    bet,
-		IsBettable: fixture.IsBettable(),
+		Fixture:       fixture,
+		UserBet:       bet,
+		IsBettable:    fixture.IsBettable(),
+		TotalBetCount: counts[fixtureID],
 	})
 }

@@ -35,6 +35,49 @@ All point values are configurable from the Admin panel.
 
 ---
 
+## Setup
+
+Before running the app you need two things: a free API key and a few values filled in `appsettings.json`.
+
+### 1. Get a football-data.org API key
+
+1. Go to **[https://www.football-data.org/client/register](https://www.football-data.org/client/register)** and create a free account.
+2. After confirming your email, log in and open **My Account → API Keys**.
+3. Copy the token shown there — it looks like `abc123def456...`.
+4. Paste it as `"api_key"` in `appsettings.json`.
+
+> **Free tier limits:** 10 requests/minute, 100 requests/day. The app uses 1 request to load all fixtures on first start, then 1 bulk request per hourly scoring run — well within the free limit for a private group.
+
+### 2. Configure `appsettings.json`
+
+Open `appsettings.json` and fill in the following fields before the first run:
+
+| Field | What to set |
+|-------|-------------|
+| `api_key` | Your football-data.org API token |
+| `admin_password` | Password for the built-in `admin` account |
+| `session_secret` | Any random string ≥ 32 characters (e.g. generate with `openssl rand -hex 32`) |
+
+Everything else has working defaults. The full field reference is in the [Configuration](#configuration----appsettingsjson) section below.
+
+### 3. (Docker only) Set the DB path
+
+When running with Docker Compose, the database must be stored in the mounted volume:
+
+```json
+"db_path": "/data/betting.db"
+```
+
+### 4. First-run checklist
+
+After starting the app and logging in as admin:
+
+- [ ] **Admin → Re-fetch all fixtures from API** — loads all 104 WC 2026 matches (if not auto-loaded on start)
+- [ ] **Admin → Refresh top scorers from API** — populates the Top Scorer dropdown for users
+- [ ] Share the URL with your group and have everyone register
+
+---
+
 ## Quick Start — Local
 
 **Prerequisites:** Go 1.22+, internet access (football-data.org API)

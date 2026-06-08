@@ -2,7 +2,7 @@
 <article style="max-width:400px;margin:4rem auto">
   <h2>Login</h2>
   {{if .Error}}<p class="flash-error">{{.Error}}</p>{{end}}
-  <form method="post" action="/login">
+  <form method="post" action="{{url "/login"}}">
     <label>
       Username
       <input type="text" name="username" required autofocus />
@@ -13,6 +13,6 @@
     </label>
     <button type="submit">Login</button>
   </form>
-  <p style="margin-top:1rem">No account? <a href="/register">Register</a></p>
+  <p style="margin-top:1rem">No account? <a href="{{url "/register"}}">Register</a></p>
 </article>
 {{end}}

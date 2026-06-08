@@ -56,7 +56,7 @@
   <td>
     {{if .IsBettable}}
       <button class="outline small"
-        hx-get="/fixtures/{{.Fixture.ID}}/bet"
+        hx-get="{{url (printf "/fixtures/%d/bet" .Fixture.ID)}}"
         hx-target="#bet-{{.Fixture.ID}}"
         hx-swap="innerHTML">
         {{if .UserBet}}Edit{{else}}Bet{{end}}

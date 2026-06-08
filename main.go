@@ -36,7 +36,6 @@ func main() {
 	}
 	defer database.Close()
 
-	// Ensure admin user exists if credentials are configured.
 	if cfg.AdminUsername != "" && cfg.AdminPassword != "" {
 		hash, err := auth.HashPassword(cfg.AdminPassword)
 		if err != nil {
@@ -64,17 +63,18 @@ func main() {
 	sm.Cookie.SameSite = http.SameSiteLaxMode
 	sm.Cookie.Secure = false
 
-	tmpl, err := handler.LoadTemplates(webFS)
+	tmpl, err := handler.LoadTemplates(webFS, cfg.BasePath)
 	if err != nil {
 		log.Fatalf("templates: %v", err)
 	}
 
 	app := &handler.App{
-		DB:   database,
-		SM:   sm,
-		Cfg:  cfg,
-		Tmpl: tmpl,
-		API:  apiClient,
+		DB:       database,
+		SM:       sm,
+		Cfg:      cfg,
+		Tmpl:     tmpl,
+		API:      apiClient,
+		BasePath: cfg.BasePath,
 	}
 
 	sc := cron.NewScorer(database, apiClient, cfg)
@@ -85,10 +85,14 @@ func main() {
 	mux := http.NewServeMux()
 	app.RegisterRoutes(mux, webFS)
 
-	h := sm.LoadAndSave(mux)
+	var h http.Handler = sm.LoadAndSave(mux)
+	if cfg.BasePath != "" {
+		h = http.StripPrefix(cfg.BasePath, h)
+		log.Printf("Serving under subpath: %s", cfg.BasePath)
+	}
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
-	log.Printf("Listening on http://localhost%s", addr)
+	log.Printf("Listening on http://localhost%s%s/", addr, cfg.BasePath)
 	if err := http.ListenAndServe(addr, h); err != nil {
 		log.Fatal(err)
 	}

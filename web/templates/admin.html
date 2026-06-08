@@ -9,21 +9,21 @@
 <article>
   <h3>Fixtures</h3>
   <p>Loaded: <strong>{{.FixtureCount}}</strong> fixtures</p>
-  <form method="post" action="/admin/setup">
+  <form method="post" action="{{url "/admin/setup"}}">
     <button type="submit" class="outline">Re-fetch all fixtures from API</button>
   </form>
   <hr />
-  <form method="post" action="/admin/score-all" style="margin-top:1rem">
+  <form method="post" action="{{url "/admin/score-all"}}" style="margin-top:1rem">
     <button type="submit">Score all finished fixtures (use cached status)</button>
   </form>
-  <form method="post" action="/admin/fetch-results" style="margin-top:.75rem">
+  <form method="post" action="{{url "/admin/fetch-results"}}" style="margin-top:.75rem">
     <button type="submit" class="contrast">⚡ Fetch results NOW from API (no schedule wait)</button>
   </form>
 </article>
 
 <article>
   <h3>Points Config</h3>
-  <form method="post" action="/admin/config">
+  <form method="post" action="{{url "/admin/config"}}">
     <div class="grid">
       <label>Exact score (X)<input type="number" name="points_exact" min="0" value="{{.PointsExact}}" /></label>
       <label>Correct outcome (Y)<input type="number" name="points_outcome" min="0" value="{{.PointsOutcome}}" /></label>
@@ -48,12 +48,12 @@
 <article>
   <h3>Tournament Scoring</h3>
   <p>Scorer candidates loaded: <strong>{{.ScorerCount}}</strong></p>
-  <form method="post" action="/admin/refresh-scorers">
+  <form method="post" action="{{url "/admin/refresh-scorers"}}">
     <button type="submit" class="outline">Refresh top scorers from API</button>
   </form>
   <hr style="margin:1.5rem 0" />
   <p>Set actual results below and score all user bets in one click.</p>
-  <form method="post" action="/admin/score-tournament">
+  <form method="post" action="{{url "/admin/score-tournament"}}">
     <div class="grid">
       <label>🥇 Champion<input type="text" name="champion" placeholder="Team name" value="{{.TResults.Champion}}" /></label>
       <label>🥈 2nd Place<input type="text" name="runner_up" placeholder="Team name" value="{{.TResults.RunnerUp}}" /></label>

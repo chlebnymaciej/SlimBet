@@ -10,7 +10,7 @@
 {{if .Flash}}<p class="flash-success">{{.Flash}}</p>{{end}}
 
 <article>
-  <form method="post" action="/tournament" {{if .IsLocked}}style="opacity:.6;pointer-events:none"{{end}}>
+  <form method="post" action="{{url "/tournament"}}" {{if .IsLocked}}style="opacity:.6;pointer-events:none"{{end}}>
     <div class="grid">
       <label>
         🥇 1st Place (Champion) — <strong>{{.Points1st}} pts</strong>

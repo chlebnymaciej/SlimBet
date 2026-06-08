@@ -25,7 +25,7 @@ func (a *App) handleLoginPost(w http.ResponseWriter, r *http.Request) {
 	a.SM.Put(r.Context(), "user_id", user.ID)
 	a.SM.Put(r.Context(), "username", user.Username)
 	a.SM.Put(r.Context(), "is_admin", user.IsAdmin)
-	http.Redirect(w, r, "/fixtures", http.StatusSeeOther)
+	http.Redirect(w, r, a.BasePath+"/fixtures", http.StatusSeeOther)
 }
 
 func (a *App) handleRegisterGet(w http.ResponseWriter, r *http.Request) {
@@ -70,10 +70,10 @@ func (a *App) handleRegisterPost(w http.ResponseWriter, r *http.Request) {
 	a.SM.Put(r.Context(), "user_id", user.ID)
 	a.SM.Put(r.Context(), "username", user.Username)
 	a.SM.Put(r.Context(), "is_admin", false)
-	http.Redirect(w, r, "/fixtures", http.StatusSeeOther)
+	http.Redirect(w, r, a.BasePath+"/fixtures", http.StatusSeeOther)
 }
 
 func (a *App) handleLogout(w http.ResponseWriter, r *http.Request) {
 	a.SM.Destroy(r.Context())
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	http.Redirect(w, r, a.BasePath+"/login", http.StatusSeeOther)
 }

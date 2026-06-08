@@ -17,12 +17,13 @@ import (
 // ScorerInterface is defined in admin.go; declared here to avoid cycles.
 // App holds all handler dependencies.
 type App struct {
-	DB     *sql.DB
-	SM     *scs.SessionManager
-	Cfg    *config.Config
-	Tmpl   *TemplateSet
-	API    *footballapi.Client
-	scorer interface {
+	DB       *sql.DB
+	SM       *scs.SessionManager
+	Cfg      *config.Config
+	Tmpl     *TemplateSet
+	API      *footballapi.Client
+	BasePath string
+	scorer   interface {
 		ScoreAll()
 		ScoreOne(int64) error
 		FetchResultsNow()
@@ -38,8 +39,8 @@ func (a *App) RegisterRoutes(mux *http.ServeMux, staticFS embed.FS) {
 	mux.HandleFunc("GET /register", a.handleRegisterGet)
 	mux.HandleFunc("POST /register", a.handleRegisterPost)
 
-	requireAuth := auth.RequireAuth(a.SM)
-	requireAdmin := auth.RequireAdmin(a.SM)
+	requireAuth := auth.RequireAuth(a.SM, a.BasePath)
+	requireAdmin := auth.RequireAdmin(a.SM, a.BasePath)
 
 	mux.Handle("GET /fixtures", requireAuth(http.HandlerFunc(a.handleFixtures)))
 	mux.Handle("GET /fixtures/{id}/bet", requireAuth(http.HandlerFunc(a.handleBetForm)))
@@ -68,10 +69,10 @@ func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if a.SM.GetInt64(r.Context(), "user_id") != 0 {
-		http.Redirect(w, r, "/fixtures", http.StatusSeeOther)
+		http.Redirect(w, r, a.BasePath+"/fixtures", http.StatusSeeOther)
 		return
 	}
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	http.Redirect(w, r, a.BasePath+"/login", http.StatusSeeOther)
 }
 
 // ── session helpers ──────────────────────────────────────────────────────────
@@ -109,23 +110,29 @@ type TemplateSet struct {
 	partials map[string]*template.Template
 }
 
-var funcMap = template.FuncMap{
-	"deref": func(p *int) int {
-		if p == nil {
-			return 0
-		}
-		return *p
-	},
-	"derefStr": func(p *int) string {
-		if p == nil {
-			return "—"
-		}
-		return fmt.Sprint(*p)
-	},
-	"flag": teamFlag,
+func buildFuncMap(basePath string) template.FuncMap {
+	return template.FuncMap{
+		"deref": func(p *int) int {
+			if p == nil {
+				return 0
+			}
+			return *p
+		},
+		"derefStr": func(p *int) string {
+			if p == nil {
+				return "—"
+			}
+			return fmt.Sprint(*p)
+		},
+		"flag": teamFlag,
+		"url": func(path string) string {
+			return basePath + path
+		},
+	}
 }
 
-func LoadTemplates(fs embed.FS) (*TemplateSet, error) {
+func LoadTemplates(fs embed.FS, basePath string) (*TemplateSet, error) {
+	fmap := buildFuncMap(basePath)
 	ts := &TemplateSet{
 		pages:    make(map[string]*template.Template),
 		partials: make(map[string]*template.Template),
@@ -142,7 +149,7 @@ func LoadTemplates(fs embed.FS) (*TemplateSet, error) {
 		"admin":           {"web/templates/base.html", "web/templates/admin.html"},
 	}
 	for name, files := range pageFiles {
-		tmpl, err := template.New("").Funcs(funcMap).ParseFS(fs, files...)
+		tmpl, err := template.New("").Funcs(fmap).ParseFS(fs, files...)
 		if err != nil {
 			return nil, fmt.Errorf("parse template %s: %w", name, err)
 		}
@@ -156,7 +163,7 @@ func LoadTemplates(fs embed.FS) (*TemplateSet, error) {
 		"leaderboard_rows": {"web/templates/leaderboard_rows.html"},
 	}
 	for name, files := range partialFiles {
-		tmpl, err := template.New(name).Funcs(funcMap).ParseFS(fs, files...)
+		tmpl, err := template.New(name).Funcs(fmap).ParseFS(fs, files...)
 		if err != nil {
 			return nil, fmt.Errorf("parse partial %s: %w", name, err)
 		}

@@ -100,7 +100,7 @@ func (a *App) handleAdminScoreOne(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	http.Redirect(w, r, "/admin", http.StatusSeeOther)
+	http.Redirect(w, r, a.BasePath+"/admin", http.StatusSeeOther)
 }
 
 func (a *App) handleAdminRefreshScorers(w http.ResponseWriter, r *http.Request) {

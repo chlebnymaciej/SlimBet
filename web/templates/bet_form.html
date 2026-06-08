@@ -1,7 +1,7 @@
 {{define "bet_form"}}
 {{if .Error}}<span class="flash-error-inline">{{.Error}}</span>{{end}}
 {{if .IsBettable}}
-<form hx-post="/fixtures/{{.Fixture.ID}}/bet"
+<form hx-post="{{url (printf "/fixtures/%d/bet" .Fixture.ID)}}"
       hx-target="#fixture-{{.Fixture.ID}}"
       hx-swap="outerHTML"
       style="display:flex;flex-direction:column;gap:.4rem">

@@ -20,6 +20,7 @@ type Config struct {
 	Points3rd             int       `json:"points_3rd"`
 	PointsTopScorer       int       `json:"points_top_scorer"`
 	TournamentBetDeadline time.Time `json:"tournament_bet_deadline"`
+	BasePath              string    `json:"base_path"`
 	CompetitionCode       string    `json:"competition_code"`
 	AdminUsername         string    `json:"admin_username"`
 	AdminPassword         string    `json:"admin_password"`

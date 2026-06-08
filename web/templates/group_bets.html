@@ -12,7 +12,7 @@
 {{if .Flash}}<p class="flash-success">{{.Flash}}</p>{{end}}
 
 <article>
-  <form method="post" action="/groups" {{if .IsLocked}}style="opacity:.6;pointer-events:none"{{end}}>
+  <form method="post" action="{{url "/groups"}}" {{if .IsLocked}}style="opacity:.6;pointer-events:none"{{end}}>
     <div class="grid-3">
     {{range .Groups}}
     {{$group := .}}

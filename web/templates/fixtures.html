@@ -6,7 +6,7 @@
 <div class="flash-error">
   No fixtures loaded yet.
   {{if .IsAdmin}}
-  <a href="/admin"><strong>Go to Admin panel → Re-fetch fixtures from API.</strong></a>
+  <a href="{{url "/admin"}}"><strong>Go to Admin panel → Re-fetch fixtures from API.</strong></a>
   {{else}}
   Ask the admin to load fixtures.
   {{end}}

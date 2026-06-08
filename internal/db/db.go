@@ -34,17 +34,29 @@ func Open(path string, migrations embed.FS) (*sql.DB, error) {
 }
 
 func runMigrations(db *sql.DB, fs embed.FS) error {
-	data, err := fs.ReadFile("migrations/001_initial.sql")
-	if err != nil {
-		return fmt.Errorf("read migration: %w", err)
+	var v1 int
+	_ = db.QueryRow("SELECT COUNT(*) FROM schema_migrations WHERE version=1").Scan(&v1)
+	if v1 == 0 {
+		data, err := fs.ReadFile("migrations/001_initial.sql")
+		if err != nil {
+			return fmt.Errorf("read migration 001: %w", err)
+		}
+		if _, err = db.Exec(string(data)); err != nil {
+			return fmt.Errorf("apply migration 001: %w", err)
+		}
 	}
 
-	var applied int
-	_ = db.QueryRow("SELECT COUNT(*) FROM schema_migrations WHERE version=1").Scan(&applied)
-	if applied > 0 {
-		return nil
+	var v2 int
+	_ = db.QueryRow("SELECT COUNT(*) FROM schema_migrations WHERE version=2").Scan(&v2)
+	if v2 == 0 {
+		data, err := fs.ReadFile("migrations/002_knockout.sql")
+		if err != nil {
+			return fmt.Errorf("read migration 002: %w", err)
+		}
+		if _, err = db.Exec(string(data)); err != nil {
+			return fmt.Errorf("apply migration 002: %w", err)
+		}
 	}
 
-	_, err = db.Exec(string(data))
-	return err
+	return nil
 }

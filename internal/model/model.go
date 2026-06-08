@@ -25,6 +25,8 @@ type Fixture struct {
 	GoalsHome     *int
 	GoalsAway     *int
 	ScoresFetched bool
+	MatchDuration string // REGULAR, EXTRA_TIME, PENALTY_SHOOTOUT
+	MatchWinner   string // HOME_TEAM, AWAY_TEAM, or ""
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }
@@ -42,14 +44,16 @@ func (f *Fixture) IsBettable() bool {
 }
 
 type Bet struct {
-	ID        int64
-	UserID    int64
-	FixtureID int64
-	HomeScore int
-	AwayScore int
-	Points    *int
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID             int64
+	UserID         int64
+	FixtureID      int64
+	HomeScore      int
+	AwayScore      int
+	Points         *int
+	AdvancesPick   string // "", "HOME", or "AWAY"
+	AdvancesPoints *int   // nil=N/A or pending, 0=wrong, 5=correct
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 type TournamentBet struct {

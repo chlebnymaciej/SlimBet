@@ -79,8 +79,13 @@ func (a *App) handleBetSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	advancesPick := r.FormValue("advances_pick")
+	if advancesPick != "HOME" && advancesPick != "AWAY" {
+		advancesPick = ""
+	}
+
 	userID := a.currentUserID(r)
-	if err := db.UpsertBet(a.DB, userID, fixtureID, homeScore, awayScore); err != nil {
+	if err := db.UpsertBet(a.DB, userID, fixtureID, homeScore, awayScore, advancesPick); err != nil {
 		http.Error(w, "db error", http.StatusInternalServerError)
 		return
 	}

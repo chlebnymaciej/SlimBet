@@ -71,7 +71,7 @@ func GetFixtures(db *sql.DB) ([]*model.Fixture, error) {
 	rows, err := db.Query(`
 		SELECT id, api_id, home_team, away_team, home_team_id, away_team_id,
 		       kickoff_at, round, group_name, venue, status,
-		       goals_home, goals_away, scores_fetched
+		       goals_home, goals_away, scores_fetched, match_duration, match_winner
 		FROM fixtures ORDER BY kickoff_at ASC`)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func GetFixtureByID(db *sql.DB, id int64) (*model.Fixture, error) {
 	row := db.QueryRow(`
 		SELECT id, api_id, home_team, away_team, home_team_id, away_team_id,
 		       kickoff_at, round, group_name, venue, status,
-		       goals_home, goals_away, scores_fetched
+		       goals_home, goals_away, scores_fetched, match_duration, match_winner
 		FROM fixtures WHERE id = ?`, id)
 	f, err := scanFixture(row)
 	if err == sql.ErrNoRows {
@@ -98,7 +98,7 @@ func GetUnscored(db *sql.DB) ([]*model.Fixture, error) {
 	rows, err := db.Query(`
 		SELECT id, api_id, home_team, away_team, home_team_id, away_team_id,
 		       kickoff_at, round, group_name, venue, status,
-		       goals_home, goals_away, scores_fetched
+		       goals_home, goals_away, scores_fetched, match_duration, match_winner
 		FROM fixtures
 		WHERE scores_fetched = 0
 		AND status NOT IN ('FINISHED','CANCELLED')
@@ -114,7 +114,7 @@ func GetUnscoredFinished(db *sql.DB) ([]*model.Fixture, error) {
 	rows, err := db.Query(`
 		SELECT id, api_id, home_team, away_team, home_team_id, away_team_id,
 		       kickoff_at, round, group_name, venue, status,
-		       goals_home, goals_away, scores_fetched
+		       goals_home, goals_away, scores_fetched, match_duration, match_winner
 		FROM fixtures
 		WHERE scores_fetched = 0
 		  AND status IN ('FINISHED')
@@ -132,7 +132,7 @@ func GetStartedUnscored(db *sql.DB) ([]*model.Fixture, error) {
 	rows, err := db.Query(`
 		SELECT id, api_id, home_team, away_team, home_team_id, away_team_id,
 		       kickoff_at, round, group_name, venue, status,
-		       goals_home, goals_away, scores_fetched
+		       goals_home, goals_away, scores_fetched, match_duration, match_winner
 		FROM fixtures
 		WHERE scores_fetched = 0
 		  AND kickoff_at < datetime('now')
@@ -159,11 +159,12 @@ func MarkScored(db *sql.DB, fixtureID int64) error {
 	return err
 }
 
-func UpdateFixtureResult(db *sql.DB, fixtureID int64, status string, goalsHome, goalsAway int) error {
+func UpdateFixtureResult(db *sql.DB, fixtureID int64, status string, goalsHome, goalsAway int, duration, winner string) error {
 	_, err := db.Exec(`
-		UPDATE fixtures SET status=?, goals_home=?, goals_away=?, updated_at=datetime('now')
+		UPDATE fixtures SET status=?, goals_home=?, goals_away=?,
+		  match_duration=?, match_winner=?, updated_at=datetime('now')
 		WHERE id=?`,
-		status, goalsHome, goalsAway, fixtureID,
+		status, goalsHome, goalsAway, duration, winner, fixtureID,
 	)
 	return err
 }
@@ -173,32 +174,40 @@ func UpdateFixtureResult(db *sql.DB, fixtureID int64, status string, goalsHome, 
 func GetBet(db *sql.DB, userID, fixtureID int64) (*model.Bet, error) {
 	b := &model.Bet{}
 	err := db.QueryRow(`
-		SELECT id, user_id, fixture_id, home_score, away_score, points
+		SELECT id, user_id, fixture_id, home_score, away_score, points,
+		       COALESCE(advances_pick,''), advances_points
 		FROM bets WHERE user_id=? AND fixture_id=?`,
 		userID, fixtureID,
-	).Scan(&b.ID, &b.UserID, &b.FixtureID, &b.HomeScore, &b.AwayScore, &b.Points)
+	).Scan(&b.ID, &b.UserID, &b.FixtureID, &b.HomeScore, &b.AwayScore, &b.Points,
+		&b.AdvancesPick, &b.AdvancesPoints)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
 	return b, err
 }
 
-func UpsertBet(db *sql.DB, userID, fixtureID int64, homeScore, awayScore int) error {
+func UpsertBet(db *sql.DB, userID, fixtureID int64, homeScore, awayScore int, advancesPick string) error {
+	var pick *string
+	if advancesPick == "HOME" || advancesPick == "AWAY" {
+		pick = &advancesPick
+	}
 	_, err := db.Exec(`
-		INSERT INTO bets (user_id, fixture_id, home_score, away_score)
-		VALUES (?,?,?,?)
+		INSERT INTO bets (user_id, fixture_id, home_score, away_score, advances_pick)
+		VALUES (?,?,?,?,?)
 		ON CONFLICT(user_id, fixture_id) DO UPDATE SET
-			home_score = excluded.home_score,
-			away_score = excluded.away_score,
-			updated_at = datetime('now')`,
-		userID, fixtureID, homeScore, awayScore,
+			home_score    = excluded.home_score,
+			away_score    = excluded.away_score,
+			advances_pick = excluded.advances_pick,
+			updated_at    = datetime('now')`,
+		userID, fixtureID, homeScore, awayScore, pick,
 	)
 	return err
 }
 
 func GetBetsForFixture(db *sql.DB, fixtureID int64) ([]*model.Bet, error) {
 	rows, err := db.Query(`
-		SELECT id, user_id, fixture_id, home_score, away_score, points
+		SELECT id, user_id, fixture_id, home_score, away_score, points,
+		       COALESCE(advances_pick,''), advances_points
 		FROM bets WHERE fixture_id=?`, fixtureID)
 	if err != nil {
 		return nil, err
@@ -207,7 +216,8 @@ func GetBetsForFixture(db *sql.DB, fixtureID int64) ([]*model.Bet, error) {
 	var bets []*model.Bet
 	for rows.Next() {
 		b := &model.Bet{}
-		if err := rows.Scan(&b.ID, &b.UserID, &b.FixtureID, &b.HomeScore, &b.AwayScore, &b.Points); err != nil {
+		if err := rows.Scan(&b.ID, &b.UserID, &b.FixtureID, &b.HomeScore, &b.AwayScore,
+			&b.Points, &b.AdvancesPick, &b.AdvancesPoints); err != nil {
 			return nil, err
 		}
 		bets = append(bets, b)
@@ -217,7 +227,8 @@ func GetBetsForFixture(db *sql.DB, fixtureID int64) ([]*model.Bet, error) {
 
 func GetBetsForUser(db *sql.DB, userID int64) (map[int64]*model.Bet, error) {
 	rows, err := db.Query(`
-		SELECT id, user_id, fixture_id, home_score, away_score, points
+		SELECT id, user_id, fixture_id, home_score, away_score, points,
+		       COALESCE(advances_pick,''), advances_points
 		FROM bets WHERE user_id=?`, userID)
 	if err != nil {
 		return nil, err
@@ -226,7 +237,8 @@ func GetBetsForUser(db *sql.DB, userID int64) (map[int64]*model.Bet, error) {
 	m := make(map[int64]*model.Bet)
 	for rows.Next() {
 		b := &model.Bet{}
-		if err := rows.Scan(&b.ID, &b.UserID, &b.FixtureID, &b.HomeScore, &b.AwayScore, &b.Points); err != nil {
+		if err := rows.Scan(&b.ID, &b.UserID, &b.FixtureID, &b.HomeScore, &b.AwayScore,
+			&b.Points, &b.AdvancesPick, &b.AdvancesPoints); err != nil {
 			return nil, err
 		}
 		m[b.FixtureID] = b
@@ -236,6 +248,11 @@ func GetBetsForUser(db *sql.DB, userID int64) (map[int64]*model.Bet, error) {
 
 func UpdateBetPoints(db *sql.DB, betID int64, points int) error {
 	_, err := db.Exec("UPDATE bets SET points=?, updated_at=datetime('now') WHERE id=?", points, betID)
+	return err
+}
+
+func UpdateBetAdvancesPoints(db *sql.DB, betID int64, points int) error {
+	_, err := db.Exec("UPDATE bets SET advances_points=?, updated_at=datetime('now') WHERE id=?", points, betID)
 	return err
 }
 
@@ -398,7 +415,7 @@ func GetLeaderboard(db *sql.DB) ([]*model.LeaderboardEntry, error) {
 	rows, err := db.Query(`
 		SELECT
 			u.username,
-			COALESCE(SUM(b.points), 0)  AS match_pts,
+			COALESCE(SUM(b.points + COALESCE(b.advances_points, 0)), 0) AS match_pts,
 			COALESCE(tb.points, 0)      AS tournament_pts,
 			COALESCE(SUM(gb.points), 0) AS group_pts
 		FROM users u
@@ -407,7 +424,7 @@ func GetLeaderboard(db *sql.DB) ([]*model.LeaderboardEntry, error) {
 		LEFT JOIN group_bets    gb ON gb.user_id  = u.id
 		WHERE u.is_admin = 0
 		GROUP BY u.id
-		ORDER BY (COALESCE(SUM(b.points),0) + COALESCE(tb.points,0) + COALESCE(SUM(gb.points),0)) DESC,
+		ORDER BY (COALESCE(SUM(b.points + COALESCE(b.advances_points,0)),0) + COALESCE(tb.points,0) + COALESCE(SUM(gb.points),0)) DESC,
 		         u.username ASC`)
 	if err != nil {
 		return nil, err
@@ -452,7 +469,7 @@ func scanFixture(row *sql.Row) (*model.Fixture, error) {
 	err := row.Scan(
 		&f.ID, &f.APIID, &f.HomeTeam, &f.AwayTeam, &f.HomeTeamID, &f.AwayTeamID,
 		&kickoffStr, &f.Round, &f.Group, &f.Venue, &f.Status,
-		&f.GoalsHome, &f.GoalsAway, &scored,
+		&f.GoalsHome, &f.GoalsAway, &scored, &f.MatchDuration, &f.MatchWinner,
 	)
 	if err != nil {
 		return nil, err
@@ -469,7 +486,7 @@ func scanFixtureRow(rows *sql.Rows) (*model.Fixture, error) {
 	err := rows.Scan(
 		&f.ID, &f.APIID, &f.HomeTeam, &f.AwayTeam, &f.HomeTeamID, &f.AwayTeamID,
 		&kickoffStr, &f.Round, &f.Group, &f.Venue, &f.Status,
-		&f.GoalsHome, &f.GoalsAway, &scored,
+		&f.GoalsHome, &f.GoalsAway, &scored, &f.MatchDuration, &f.MatchWinner,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("scan fixture: %w", err)

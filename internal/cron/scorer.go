@@ -125,7 +125,7 @@ func (s *Scorer) scoreFixture(fixtureID int64) error {
 		goalsAway = *item.Score.FullTime.Away
 	}
 
-	if err := db.UpdateFixtureResult(s.db, fixtureID, item.Status, goalsHome, goalsAway); err != nil {
+	if err := db.UpdateFixtureResult(s.db, fixtureID, item.Status, goalsHome, goalsAway, item.Score.Duration, item.Score.Winner); err != nil {
 		return err
 	}
 
@@ -148,6 +148,18 @@ func (s *Scorer) awardPoints(fixture *model.Fixture) error {
 		pts := scorer.ScoreBet(bet, fixture, pointsExact, pointsOutcome)
 		if err := db.UpdateBetPoints(s.db, bet.ID, pts); err != nil {
 			log.Printf("cron: update bet %d points: %v", bet.ID, err)
+		}
+
+		// Award advances-pick bonus for knockout matches that went to ET or penalties.
+		if fixture.MatchDuration != "" && fixture.MatchDuration != "REGULAR" && bet.AdvancesPick != "" {
+			advPts := 0
+			if (bet.AdvancesPick == "HOME" && fixture.MatchWinner == "HOME_TEAM") ||
+				(bet.AdvancesPick == "AWAY" && fixture.MatchWinner == "AWAY_TEAM") {
+				advPts = 5
+			}
+			if err := db.UpdateBetAdvancesPoints(s.db, bet.ID, advPts); err != nil {
+				log.Printf("cron: update advances points bet %d: %v", bet.ID, err)
+			}
 		}
 	}
 

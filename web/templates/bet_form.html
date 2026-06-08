@@ -4,17 +4,35 @@
 <form hx-post="/fixtures/{{.Fixture.ID}}/bet"
       hx-target="#fixture-{{.Fixture.ID}}"
       hx-swap="outerHTML"
-      style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
-  <input type="number" name="home_score" min="0" max="20" style="width:4rem"
-    value="{{if .ExistingBet}}{{.ExistingBet.HomeScore}}{{else}}0{{end}}" required />
-  <span>–</span>
-  <input type="number" name="away_score" min="0" max="20" style="width:4rem"
-    value="{{if .ExistingBet}}{{.ExistingBet.AwayScore}}{{else}}0{{end}}" required />
-  <button type="submit" class="small">Save</button>
-  <button type="button" class="outline small secondary"
-    onclick="document.getElementById('bet-{{.Fixture.ID}}').innerHTML = '{{if .ExistingBet}}<span class=\'my-bet\'>{{.ExistingBet.HomeScore}}–{{.ExistingBet.AwayScore}}</span>{{else}}<em class=\'text-muted\'>No bet</em>{{end}}'">
-    Cancel
-  </button>
+      style="display:flex;flex-direction:column;gap:.4rem">
+  <div style="display:flex;gap:.5rem;align-items:center">
+    <input type="number" name="home_score" min="0" max="20" style="width:4rem"
+      value="{{if .ExistingBet}}{{.ExistingBet.HomeScore}}{{else}}0{{end}}" required />
+    <span>–</span>
+    <input type="number" name="away_score" min="0" max="20" style="width:4rem"
+      value="{{if .ExistingBet}}{{.ExistingBet.AwayScore}}{{else}}0{{end}}" required />
+  </div>
+  {{if not .Fixture.Group}}
+  <div style="font-size:.82rem;color:#555">
+    <label style="display:block;margin-bottom:.2rem">Who advances if draw? <em style="color:#888">(optional, +5 pts)</em></label>
+    <select name="advances_pick" style="font-size:.82rem">
+      <option value="">— no pick —</option>
+      <option value="HOME"{{if and .ExistingBet (eq .ExistingBet.AdvancesPick "HOME")}} selected{{end}}>
+        🏠 {{.Fixture.HomeTeam}}
+      </option>
+      <option value="AWAY"{{if and .ExistingBet (eq .ExistingBet.AdvancesPick "AWAY")}} selected{{end}}>
+        ✈ {{.Fixture.AwayTeam}}
+      </option>
+    </select>
+  </div>
+  {{end}}
+  <div style="display:flex;gap:.4rem">
+    <button type="submit" class="small">Save</button>
+    <button type="button" class="outline small secondary"
+      onclick="document.getElementById('bet-{{.Fixture.ID}}').innerHTML = '{{if .ExistingBet}}<span class=\'my-bet\'>{{.ExistingBet.HomeScore}}–{{.ExistingBet.AwayScore}}</span>{{else}}<em class=\'text-muted\'>No bet</em>{{end}}'">
+      Cancel
+    </button>
+  </div>
 </form>
 {{else}}
 <em class="text-muted">Bet window closed.</em>

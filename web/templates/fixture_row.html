@@ -39,6 +39,14 @@
       {{else if .Fixture.IsFinished}}
         <span class="points-pending">—</span>
       {{end}}
+      {{if .UserBet.AdvancesPick}}
+      <span class="advances-pick">
+        adv: {{if eq .UserBet.AdvancesPick "HOME"}}{{.Fixture.HomeTeam}}{{else}}{{.Fixture.AwayTeam}}{{end}}
+        {{if .UserBet.AdvancesPoints}}
+          <span class="points-badge">{{deref .UserBet.AdvancesPoints}} pts</span>
+        {{end}}
+      </span>
+      {{end}}
     {{else if .IsBettable}}
       <em class="text-muted">No bet</em>
     {{else}}

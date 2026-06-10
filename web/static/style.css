@@ -86,8 +86,10 @@ tr.day-header:not(:first-child) td {
 
 .vs-sep { color: #adb5bd; font-size: .8rem; margin: 0 .25rem; }
 
-@media (max-width: 32rem) {
+@media (max-width: 512px) {
   input[type="number"] { font-size: 1.2rem !important; min-height: 3rem !important; width: 4.5rem !important; }
   .matrix-table { font-size: .75rem; }
   .btn-xs { padding-left: .75rem !important; padding-right: .75rem !important; min-height: 2rem !important; }
+  .mx-match { min-width: 10em; max-width: 10em; width: 10em; }
+
 }

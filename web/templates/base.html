@@ -28,9 +28,9 @@
     </div>
     {{if .Username}}
     <div class="navbar-end hidden md:flex items-center gap-1">
-      <a href="{{url "/fixtures"}}" class="btn btn-ghost btn-sm">Fixtures</a>
-      <a href="{{url "/groups"}}" class="btn btn-ghost btn-sm">Groups</a>
-      <a href="{{url "/tournament"}}" class="btn btn-ghost btn-sm">Tournament</a>
+      <a href="{{url "/fixtures"}}" class="btn btn-ghost btn-sm">Fixtures Bets</a>
+      <a href="{{url "/groups"}}" class="btn btn-ghost btn-sm">Groups Winner Bets</a>
+      <a href="{{url "/tournament"}}" class="btn btn-ghost btn-sm">Tournament Podium Bets</a>
       <a href="{{url "/leaderboard"}}" class="btn btn-ghost btn-sm">Leaderboard</a>
       {{if .IsAdmin}}<a href="{{url "/admin"}}" class="btn btn-ghost btn-sm">Admin</a>{{end}}
       <form method="post" action="{{url "/logout"}}" style="margin:0">

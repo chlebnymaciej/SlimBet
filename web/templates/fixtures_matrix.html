@@ -43,10 +43,10 @@
         {{$row := .}}
         <tr class="mx-row{{if .Fixture.IsFinished}} mx-finished{{end}}">
           <td class="mx-match">
-            {{flag .Fixture.HomeTeam}} <strong>{{.Fixture.HomeTeam}}</strong>
-            <span style="color:#adb5bd;font-size:.8rem">vs</span>
-            {{flag .Fixture.AwayTeam}} <strong>{{.Fixture.AwayTeam}}</strong>
-            <br><small class="text-gray-400">{{.Fixture.KickoffAt.Format "02 Jan 15:04"}}</small>
+            <span class="mx-team">{{flag .Fixture.HomeTeam}} <strong>{{.Fixture.HomeTeam}}</strong></span>
+            <span class="vs-sep">vs</span>
+            <span class="mx-team">{{flag .Fixture.AwayTeam}} <strong>{{.Fixture.AwayTeam}}</strong></span>
+            <small class="text-gray-400 block">{{.Fixture.KickoffAt.Format "02 Jan 15:04"}}</small>
           </td>
           <td class="mx-score">
             {{if .Fixture.IsFinished}}

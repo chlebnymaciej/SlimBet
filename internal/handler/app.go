@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"net/http"
 
 	"github.com/alexedwards/scs/v2"
@@ -31,7 +32,8 @@ type App struct {
 }
 
 func (a *App) RegisterRoutes(mux *http.ServeMux, staticFS embed.FS) {
-	mux.Handle("GET /static/", http.FileServerFS(staticFS))
+	sub, _ := fs.Sub(staticFS, "web")
+	mux.Handle("GET /static/", http.FileServerFS(sub))
 
 	mux.HandleFunc("GET /", a.handleIndex)
 	mux.HandleFunc("GET /login", a.handleLoginGet)

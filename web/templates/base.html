@@ -16,7 +16,7 @@
       }
     }
   </script>
-  <link rel="stylesheet" href="{{url "/static/style.css"}}" />
+  <link rel="stylesheet" href="{{url "/static/style.css"}}" type="text/css"/>
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
@@ -24,7 +24,7 @@
 
   <div class="navbar bg-white shadow-sm sticky top-0 z-40 px-4">
     <div class="navbar-start">
-      <a href="{{url "/"}}" class="font-bold text-lg">⚽ Slim Bet</a>
+      <a href="{{url "/"}}" class="font-bold text-lg dupa">⚽ Slim Bet</a>
     </div>
     {{if .Username}}
     <div class="navbar-end hidden md:flex items-center gap-1">

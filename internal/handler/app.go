@@ -44,6 +44,9 @@ func (a *App) RegisterRoutes(mux *http.ServeMux, staticFS embed.FS) {
 
 	mux.Handle("GET /fixtures", requireAuth(http.HandlerFunc(a.handleFixtures)))
 	mux.Handle("GET /fixtures/matrix", requireAuth(http.HandlerFunc(a.handleFixturesMatrix)))
+	mux.Handle("GET /fixtures/matrix/csv", requireAuth(http.HandlerFunc(a.handleFixturesCSV)))
+	mux.Handle("GET /groups/matrix/csv", requireAuth(http.HandlerFunc(a.handleGroupsCSV)))
+	mux.Handle("GET /tournament/matrix/csv", requireAuth(http.HandlerFunc(a.handleTournamentCSV)))
 	mux.Handle("GET /fixtures/{id}/bets", requireAuth(http.HandlerFunc(a.handleFixtureBets)))
 	mux.Handle("GET /fixtures/{id}/bet", requireAuth(http.HandlerFunc(a.handleBetForm)))
 	mux.Handle("POST /fixtures/{id}/bet", requireAuth(http.HandlerFunc(a.handleBetSubmit)))

@@ -9,6 +9,9 @@ FROM alpine:latest
 # ca-certificates for HTTPS calls to api-football.com; tzdata for time zones
 RUN apk add --no-cache ca-certificates tzdata
 RUN addgroup -S app && adduser -S app -G app
+
+RUN mkdir -p /app/data/backup && chown -R app:app /app
+
 WORKDIR /app
 COPY --from=builder /build/server .
 USER app

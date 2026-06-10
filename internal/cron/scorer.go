@@ -2,12 +2,17 @@ package cron
 
 import (
 	"database/sql"
+	"fmt"
+	"io"
 	"log"
+	"os"
+	"path/filepath"
 	"time"
 
 	footballapi "tournament-games/internal/api"
 	"tournament-games/internal/config"
 	"tournament-games/internal/db"
+	"tournament-games/internal/export"
 	"tournament-games/internal/model"
 	"tournament-games/internal/scorer"
 
@@ -34,6 +39,7 @@ func (s *Scorer) Start() {
 	s.cron.AddFunc("1 * * * *", s.scoreFinished)
 	s.cron.AddFunc("0 * * * *", s.cleanSessions)
 	s.cron.AddFunc("* * * * *", s.lockIfDeadlinePassed)
+	s.cron.AddFunc("5 */2 * * *", s.backupCSVs)
 	s.cron.Start()
 }
 
@@ -222,5 +228,36 @@ func (s *Scorer) lockIfDeadlinePassed() {
 	}
 	if err := db.LockTournamentBets(s.db); err != nil {
 		log.Printf("cron: lock tournament bets: %v", err)
+	}
+}
+
+func (s *Scorer) backupCSVs() {
+	dir := s.cfg.BackupPath
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		log.Printf("cron: backup csv mkdir %s: %v", dir, err)
+		return
+	}
+	timestamp := time.Now().UTC().Format("20060102-150405")
+	type csvJob struct {
+		name string
+		fn   func(io.Writer) error
+	}
+	jobs := []csvJob{
+		{"fixtures", func(w io.Writer) error { return export.BuildFixturesCSV(s.db, w) }},
+		{"groups", func(w io.Writer) error { return export.BuildGroupsCSV(s.db, w) }},
+		{"tournament", func(w io.Writer) error { return export.BuildTournamentCSV(s.db, s.cfg, w) }},
+	}
+	for _, job := range jobs {
+		path := filepath.Join(dir, fmt.Sprintf("%s-%s-backup.csv", job.name, timestamp))
+		f, err := os.Create(path)
+		if err != nil {
+			log.Printf("cron: backup csv create %s: %v", path, err)
+			continue
+		}
+		if err := job.fn(f); err != nil {
+			log.Printf("cron: backup csv write %s: %v", path, err)
+		}
+		f.Close()
+		log.Printf("cron: backup csv saved %s", path)
 	}
 }

@@ -25,6 +25,7 @@ type Config struct {
 	AdminUsername         string    `json:"admin_username"`
 	AdminPassword         string    `json:"admin_password"`
 	SessionSecret         string    `json:"session_secret"`
+	BackupPath            string    `json:"backup_path"`
 
 	path string
 	mu   sync.RWMutex
@@ -44,6 +45,7 @@ func Load(path string) (*Config, error) {
 		CompetitionCode:   "WC",
 		AdminUsername:     "admin",
 		SessionSecret:     "change-me-to-a-random-32-byte-string!",
+		BackupPath:        "/app/data/backup",
 	}
 	cfg.path = path
 

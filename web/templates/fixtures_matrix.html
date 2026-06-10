@@ -14,6 +14,9 @@
 
   <!-- ── Fixtures tab ──────────────────────────────────────────────────── -->
   <div x-show="tab==='fixtures'">
+    <div style="text-align:right;margin-bottom:.5rem">
+      <a href="{{url "/fixtures/matrix/csv"}}" class="outline small" role="button">&#11015; Export CSV</a>
+    </div>
     <p class="hint" style="margin-bottom:.75rem">
       Cell colours:
       <span class="bc-legend bc-high">8+ pts</span>
@@ -81,6 +84,9 @@
 
   <!-- ── Groups tab ───────────────────────────────────────────────────── -->
   <div x-show="tab==='groups'">
+    <div style="text-align:right;margin-bottom:.5rem">
+      <a href="{{url "/groups/matrix/csv"}}" class="outline small" role="button">&#11015; Export CSV</a>
+    </div>
     <p class="hint" style="margin-bottom:.75rem">
       Cell colours:
       <span class="bc-legend bc-high">correct (10 pts)</span>
@@ -124,6 +130,9 @@
 
   <!-- ── Tournament tab ───────────────────────────────────────────────── -->
   <div x-show="tab==='tournament'">
+    <div style="text-align:right;margin-bottom:.5rem">
+      <a href="{{url "/tournament/matrix/csv"}}" class="outline small" role="button">&#11015; Export CSV</a>
+    </div>
     <p class="hint" style="margin-bottom:.75rem">
       Cell colours:
       <span class="bc-legend bc-high">correct</span>

@@ -89,7 +89,7 @@ func (a *App) handleFixtures(w http.ResponseWriter, r *http.Request) {
 
 		var dayGroups []DayGroup
 		for _, dayKey := range dayOrder {
-			label := dayMap[dayKey][0].Fixture.KickoffAt.Format("Mon, 02 Jan 2026")
+			label := dayMap[dayKey][0].Fixture.KickoffAt.Format("Mon, 02 Jan 2006")
 			dayGroups = append(dayGroups, DayGroup{
 				Date:     label,
 				Fixtures: dayMap[dayKey],

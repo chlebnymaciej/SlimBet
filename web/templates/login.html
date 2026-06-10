@@ -1,18 +1,26 @@
 {{define "content"}}
-<article style="max-width:400px;margin:4rem auto">
-  <h2>Login</h2>
-  {{if .Error}}<p class="flash-error">{{.Error}}</p>{{end}}
-  <form method="post" action="{{url "/login"}}">
-    <label>
-      Username
-      <input type="text" name="username" required autofocus />
-    </label>
-    <label>
-      Password
-      <input type="password" name="password" required />
-    </label>
-    <button type="submit">Login</button>
-  </form>
-  <p style="margin-top:1rem">No account? <a href="{{url "/register"}}">Register</a></p>
-</article>
+<div class="flex justify-center items-start pt-16">
+  <div class="card w-full max-w-sm bg-white shadow-xl border border-gray-100">
+    <div class="card-body gap-4">
+      <h2 class="card-title text-2xl">Login</h2>
+      {{if .Error}}
+      <div role="alert" class="alert alert-error py-2 text-sm">
+        <span>{{.Error}}</span>
+      </div>
+      {{end}}
+      <form method="post" action="{{url "/login"}}" class="flex flex-col gap-3">
+        <div class="form-control">
+          <label class="label pb-1"><span class="label-text font-medium">Username</span></label>
+          <input class="input input-bordered w-full" type="text" name="username" required autofocus />
+        </div>
+        <div class="form-control">
+          <label class="label pb-1"><span class="label-text font-medium">Password</span></label>
+          <input class="input input-bordered w-full" type="password" name="password" required />
+        </div>
+        <button type="submit" class="btn btn-primary w-full mt-1">Login</button>
+      </form>
+      <p class="text-sm text-center text-gray-500">No account? <a href="{{url "/register"}}" class="link link-primary">Register</a></p>
+    </div>
+  </div>
+</div>
 {{end}}

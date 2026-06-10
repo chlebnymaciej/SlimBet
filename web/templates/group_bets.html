@@ -1,43 +1,47 @@
 {{define "content"}}
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
-  <h2 style="margin:0">Group Winner Bets</h2>
-  <a href="{{url "/fixtures/matrix"}}#groups" class="outline small">🔲 Matrix view</a>
+<div class="flex justify-between items-center mb-3">
+  <h2 class="text-2xl font-bold">Group Winner Bets</h2>
+  <a href="{{url "/fixtures/matrix"}}#groups" class="btn btn-sm btn-outline">🔲 Matrix</a>
 </div>
 
 {{if .IsLocked}}
-<p class="flash-error">Bets are locked (deadline: {{.Deadline.Format "02 Jan 2006 15:04 UTC"}}).</p>
+<div role="alert" class="alert alert-warning mb-4">
+  <span>Bets are locked (deadline: {{.Deadline.Format "02 Jan 2006 15:04 UTC"}}).</span>
+</div>
 {{else}}
   {{if not .Deadline.IsZero}}
-  <p class="hint">Deadline: <strong>{{.Deadline.Format "02 Jan 2006 15:04 UTC"}}</strong></p>
+  <p class="text-sm text-gray-500 mb-3">Deadline: <strong class="text-gray-800">{{.Deadline.Format "02 Jan 2006 15:04 UTC"}}</strong></p>
   {{end}}
 {{end}}
 
-{{if .Flash}}<p class="flash-success">{{.Flash}}</p>{{end}}
-
-<article>
-  <form method="post" action="{{url "/groups"}}" {{if .IsLocked}}style="opacity:.6;pointer-events:none"{{end}}>
-    <div class="grid-3">
-    {{range .Groups}}
-    {{$group := .}}
-    <label>
-      Group {{.Name}}
-      <select name="group_{{.Name}}" {{if $.IsLocked}}disabled{{end}}>
-        <option value="">— pick winner —</option>
-        {{range .Teams}}
-        <option value="{{.}}"{{if and $group.UserBet (eq $group.UserBet.TeamName .)}} selected{{end}}>{{.}}</option>
-        {{end}}
-      </select>
-      {{if .UserBet}}
-        <small>Current: {{flag .UserBet.TeamName}} <strong>{{.UserBet.TeamName}}</strong>{{if .UserBet.Points}} · {{deref .UserBet.Points}} pts{{end}}</small>
+<div class="card bg-white shadow-sm border border-gray-100">
+  <div class="card-body p-4">
+    <form method="post" action="{{url "/groups"}}"{{if .IsLocked}} class="opacity-60 pointer-events-none"{{end}}>
+      <div class="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-3">
+      {{range .Groups}}
+      {{$group := .}}
+      <div class="card card-compact bg-gray-50 border border-gray-100">
+        <div class="card-body p-3">
+          <h4 class="font-semibold text-sm text-gray-600">Group {{.Name}}</h4>
+          <select name="group_{{.Name}}" class="select select-bordered select-sm w-full"{{if $.IsLocked}} disabled{{end}}>
+            <option value="">— pick winner —</option>
+            {{range .Teams}}
+            <option value="{{.}}"{{if and $group.UserBet (eq $group.UserBet.TeamName .)}} selected{{end}}>{{.}}</option>
+            {{end}}
+          </select>
+          {{if .UserBet}}
+            <p class="text-xs text-gray-400 mt-1">Current: {{flag .UserBet.TeamName}} <strong class="text-gray-600">{{.UserBet.TeamName}}</strong>{{if .UserBet.Points}} · {{deref .UserBet.Points}} pts{{end}}</p>
+          {{end}}
+        </div>
+      </div>
+      {{else}}
+      <p class="text-gray-400 col-span-3">No groups available yet. Ask admin to load fixtures.</p>
       {{end}}
-    </label>
-    {{else}}
-    <p>No groups available yet. Ask admin to load fixtures.</p>
-    {{end}}
-    </div>
-    {{if not .IsLocked}}
-    <button type="submit" style="margin-top:1rem">Save group bets</button>
-    {{end}}
-  </form>
-</article>
+      </div>
+      {{if not .IsLocked}}
+      <button type="submit" class="btn btn-primary mt-4">Save group bets</button>
+      {{end}}
+    </form>
+  </div>
+</div>
 {{end}}

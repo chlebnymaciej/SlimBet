@@ -1,43 +1,61 @@
 {{define "fixture_row"}}
-<tr id="fixture-{{.Fixture.ID}}">
-  <td class="group-cell">
+<tr id="fixture-{{.Fixture.ID}}" class="hover:bg-gray-50">
+  <td class="hidden xs:table-cell">
     {{if .Fixture.Group}}<span class="group-label">{{.Fixture.Group}}</span>{{end}}
   </td>
   <td>
-    {{flag .Fixture.HomeTeam}} <strong>{{.Fixture.HomeTeam}}</strong>
-    <span class="vs-sep">vs</span>
-    {{flag .Fixture.AwayTeam}} <strong>{{.Fixture.AwayTeam}}</strong>
+    <div class="font-medium text-sm leading-snug">
+      {{flag .Fixture.HomeTeam}} <strong>{{.Fixture.HomeTeam}}</strong>
+      <span class="text-gray-400 text-xs mx-1">vs</span>
+      {{flag .Fixture.AwayTeam}} <strong>{{.Fixture.AwayTeam}}</strong>
+    </div>
+    <div class="xs:hidden text-xs text-gray-400 mt-0.5 flex flex-wrap gap-x-2 items-center">
+      {{if .Fixture.Group}}<span class="group-label">{{.Fixture.Group}}</span>{{end}}
+      <span>{{.Fixture.KickoffAt.Format "02 Jan 15:04"}}</span>
+      {{if .Fixture.IsFinished}}
+        <span class="badge badge-ghost badge-xs">FT</span>
+        {{if and .Fixture.GoalsHome .Fixture.GoalsAway}}
+          <strong class="text-gray-700">{{deref .Fixture.GoalsHome}}–{{deref .Fixture.GoalsAway}}</strong>
+        {{else}}<strong class="text-gray-700">0–0</strong>{{end}}
+      {{else if eq .Fixture.Status "IN_PLAY"}}
+        <span class="badge badge-success badge-xs">LIVE</span>
+      {{else if eq .Fixture.Status "PAUSED"}}
+        <span class="badge badge-success badge-xs">HT</span>
+      {{else if eq .Fixture.Status "POSTPONED"}}
+        <span class="badge badge-ghost badge-xs">PST</span>
+      {{end}}
+    </div>
   </td>
-  <td style="white-space:nowrap">{{.Fixture.KickoffAt.Format "02 Jan 15:04"}}</td>
-  <td>
+  <td class="hidden xs:table-cell whitespace-nowrap text-sm">{{.Fixture.KickoffAt.Format "02 Jan 15:04"}}</td>
+  <td class="hidden xs:table-cell">
     {{if .Fixture.IsFinished}}
-      <span class="badge badge-done">FT</span>
+      <span class="badge badge-ghost badge-sm">FT</span>
     {{else if eq .Fixture.Status "IN_PLAY"}}
-      <span class="badge badge-live">LIVE</span>
+      <span class="badge badge-success badge-sm">LIVE</span>
     {{else if eq .Fixture.Status "PAUSED"}}
-      <span class="badge badge-live">HT</span>
+      <span class="badge badge-success badge-sm">HT</span>
     {{else if eq .Fixture.Status "POSTPONED"}}
-      <span class="badge badge-ns">PST</span>
+      <span class="badge badge-ghost badge-sm">PST</span>
     {{else}}
-      <span class="badge badge-ns">—</span>
+      <span class="text-gray-300">—</span>
     {{end}}
   </td>
-  <td style="white-space:nowrap">
+  <td class="hidden xs:table-cell whitespace-nowrap text-sm">
     {{if and .Fixture.GoalsHome .Fixture.GoalsAway}}
       <strong>{{deref .Fixture.GoalsHome}} – {{deref .Fixture.GoalsAway}}</strong>
     {{else if .Fixture.IsFinished}}
       <strong>0 – 0</strong>
     {{else}}
-      —
+      <span class="text-gray-300">—</span>
     {{end}}
   </td>
-  <td id="bet-{{.Fixture.ID}}">
+  <td id="bet-{{.Fixture.ID}}" class="text-sm">
     {{if .UserBet}}
       <span class="my-bet">{{.UserBet.HomeScore}}–{{.UserBet.AwayScore}}</span>
       {{if .UserBet.Points}}
         <span class="points-badge">{{deref .UserBet.Points}} pts</span>
       {{else if .Fixture.IsFinished}}
-        <span class="points-pending">—</span>
+        <span class="text-gray-400 text-xs">—</span>
       {{end}}
       {{if .UserBet.AdvancesPick}}
       <span class="advances-pick">
@@ -48,14 +66,15 @@
       </span>
       {{end}}
     {{else if .IsBettable}}
-      <em class="text-muted">No bet</em>
+      <em class="text-gray-400 text-xs">No bet</em>
     {{else}}
-      <em class="text-muted">—</em>
+      <em class="text-gray-400 text-xs">—</em>
     {{end}}
   </td>
-  <td style="white-space:nowrap;display:flex;gap:.3rem;flex-wrap:wrap">
+  <td class="whitespace-nowrap">
+    <div class="flex gap-1 flex-wrap">
     {{if .IsBettable}}
-      <button class="outline small"
+      <button class="btn btn-xs btn-outline"
         hx-get="{{url (printf "/fixtures/%d/bet" .Fixture.ID)}}"
         hx-target="#bet-{{.Fixture.ID}}"
         hx-swap="innerHTML">
@@ -63,13 +82,14 @@
       </button>
     {{end}}
     {{if gt .TotalBetCount 0}}
-    <button class="outline small secondary"
+    <button class="btn btn-xs btn-ghost"
       hx-get="{{url (printf "/fixtures/%d/bets" .Fixture.ID)}}"
       hx-target="#bets-panel-{{.Fixture.ID}}"
       hx-swap="innerHTML">
       👥 {{.TotalBetCount}}
     </button>
     {{end}}
+    </div>
   </td>
 </tr>
 <tr class="bets-reveal-row">

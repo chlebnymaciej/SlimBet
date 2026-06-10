@@ -1,69 +1,104 @@
 {{define "content"}}
-<h2>Admin Panel</h2>
+<h2 class="text-2xl font-bold mb-4">Admin Panel</h2>
 
-{{if .Flash}}<p class="flash-success">{{.Flash}}</p>{{end}}
-{{if .Error}}<p class="flash-error">{{.Error}}</p>{{end}}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
 
-<div class="grid">
+<div class="card bg-white shadow-sm border border-gray-100">
+  <div class="card-body">
+    <h3 class="card-title text-lg">Fixtures</h3>
+    <p class="text-sm text-gray-600">Loaded: <strong>{{.FixtureCount}}</strong> fixtures</p>
+    <form method="post" action="{{url "/admin/setup"}}">
+      <button type="submit" class="btn btn-outline btn-sm w-full">Re-fetch all fixtures from API</button>
+    </form>
+    <div class="divider my-2"></div>
+    <form method="post" action="{{url "/admin/score-all"}}">
+      <button type="submit" class="btn btn-primary btn-sm w-full">Score all finished fixtures</button>
+    </form>
+    <form method="post" action="{{url "/admin/fetch-results"}}" class="mt-2">
+      <button type="submit" class="btn btn-warning btn-sm w-full">⚡ Fetch results NOW from API</button>
+    </form>
+  </div>
+</div>
 
-<article>
-  <h3>Fixtures</h3>
-  <p>Loaded: <strong>{{.FixtureCount}}</strong> fixtures</p>
-  <form method="post" action="{{url "/admin/setup"}}">
-    <button type="submit" class="outline">Re-fetch all fixtures from API</button>
-  </form>
-  <hr />
-  <form method="post" action="{{url "/admin/score-all"}}" style="margin-top:1rem">
-    <button type="submit">Score all finished fixtures (use cached status)</button>
-  </form>
-  <form method="post" action="{{url "/admin/fetch-results"}}" style="margin-top:.75rem">
-    <button type="submit" class="contrast">⚡ Fetch results NOW from API (no schedule wait)</button>
-  </form>
-</article>
-
-<article>
-  <h3>Points Config</h3>
-  <form method="post" action="{{url "/admin/config"}}">
-    <div class="grid">
-      <label>Exact score (X)<input type="number" name="points_exact" min="0" value="{{.PointsExact}}" /></label>
-      <label>Correct outcome (Y)<input type="number" name="points_outcome" min="0" value="{{.PointsOutcome}}" /></label>
-    </div>
-    <div class="grid">
-      <label>Group winner (G)<input type="number" name="points_group" min="0" value="{{.PointsGroup}}" /></label>
-      <label>Tournament deadline<input type="datetime-local" name="tournament_deadline" value="{{.Deadline.Format "2006-01-02T15:04"}}" /></label>
-    </div>
-    <p style="margin:.5rem 0 .25rem;font-weight:600;font-size:.9rem">Tournament placing points</p>
-    <div class="grid">
-      <label>🥇 1st place<input type="number" name="points_1st" min="0" value="{{.Points1st}}" /></label>
-      <label>🥈 2nd place<input type="number" name="points_2nd" min="0" value="{{.Points2nd}}" /></label>
-      <label>🥉 3rd place<input type="number" name="points_3rd" min="0" value="{{.Points3rd}}" /></label>
-      <label>⚽ Top scorer<input type="number" name="points_scorer" min="0" value="{{.PointsScorer}}" /></label>
-    </div>
-    <button type="submit">Save config</button>
-  </form>
-</article>
+<div class="card bg-white shadow-sm border border-gray-100">
+  <div class="card-body">
+    <h3 class="card-title text-lg">Points Config</h3>
+    <form method="post" action="{{url "/admin/config"}}">
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <div class="form-control">
+          <label class="label py-1"><span class="label-text text-xs">Exact score (X)</span></label>
+          <input type="number" name="points_exact" min="0" class="input input-bordered input-sm" value="{{.PointsExact}}" />
+        </div>
+        <div class="form-control">
+          <label class="label py-1"><span class="label-text text-xs">Correct outcome (Y)</span></label>
+          <input type="number" name="points_outcome" min="0" class="input input-bordered input-sm" value="{{.PointsOutcome}}" />
+        </div>
+        <div class="form-control">
+          <label class="label py-1"><span class="label-text text-xs">Group winner (G)</span></label>
+          <input type="number" name="points_group" min="0" class="input input-bordered input-sm" value="{{.PointsGroup}}" />
+        </div>
+        <div class="form-control">
+          <label class="label py-1"><span class="label-text text-xs">Tournament deadline</span></label>
+          <input type="datetime-local" name="tournament_deadline" class="input input-bordered input-sm" value="{{.Deadline.Format "2006-01-02T15:04"}}" />
+        </div>
+      </div>
+      <p class="text-xs font-semibold text-gray-500 mb-1 mt-1">Tournament placing points</p>
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <div class="form-control">
+          <label class="label py-1"><span class="label-text text-xs">🥇 1st place</span></label>
+          <input type="number" name="points_1st" min="0" class="input input-bordered input-sm" value="{{.Points1st}}" />
+        </div>
+        <div class="form-control">
+          <label class="label py-1"><span class="label-text text-xs">🥈 2nd place</span></label>
+          <input type="number" name="points_2nd" min="0" class="input input-bordered input-sm" value="{{.Points2nd}}" />
+        </div>
+        <div class="form-control">
+          <label class="label py-1"><span class="label-text text-xs">🥉 3rd place</span></label>
+          <input type="number" name="points_3rd" min="0" class="input input-bordered input-sm" value="{{.Points3rd}}" />
+        </div>
+        <div class="form-control">
+          <label class="label py-1"><span class="label-text text-xs">⚽ Top scorer</span></label>
+          <input type="number" name="points_scorer" min="0" class="input input-bordered input-sm" value="{{.PointsScorer}}" />
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm w-full">Save config</button>
+    </form>
+  </div>
+</div>
 
 </div>
 
-<article>
-  <h3>Tournament Scoring</h3>
-  <p>Scorer candidates loaded: <strong>{{.ScorerCount}}</strong></p>
-  <form method="post" action="{{url "/admin/refresh-scorers"}}">
-    <button type="submit" class="outline">Refresh top scorers from API</button>
-  </form>
-  <hr style="margin:1.5rem 0" />
-  <p>Set actual results below and score all user bets in one click.</p>
-  <form method="post" action="{{url "/admin/score-tournament"}}">
-    <div class="grid">
-      <label>🥇 Champion<input type="text" name="champion" placeholder="Team name" value="{{.TResults.Champion}}" /></label>
-      <label>🥈 2nd Place<input type="text" name="runner_up" placeholder="Team name" value="{{.TResults.RunnerUp}}" /></label>
-    </div>
-    <div class="grid">
-      <label>🥉 3rd Place<input type="text" name="third_place" placeholder="Team name" value="{{.TResults.ThirdPlace}}" /></label>
-      <label>⚽ Top Scorer<input type="text" name="top_scorer" placeholder="Player name" value="{{.TResults.TopScorer}}" /></label>
-    </div>
-    <button type="submit">Score all tournament bets</button>
-  </form>
-</article>
+<div class="card bg-white shadow-sm border border-gray-100">
+  <div class="card-body">
+    <h3 class="card-title text-lg">Tournament Scoring</h3>
+    <p class="text-sm text-gray-600">Scorer candidates loaded: <strong>{{.ScorerCount}}</strong></p>
+    <form method="post" action="{{url "/admin/refresh-scorers"}}">
+      <button type="submit" class="btn btn-outline btn-sm">Refresh top scorers from API</button>
+    </form>
+    <div class="divider"></div>
+    <p class="text-sm text-gray-500 mb-2">Set actual results and score all user bets in one click.</p>
+    <form method="post" action="{{url "/admin/score-tournament"}}">
+      <div class="grid grid-cols-1 xs:grid-cols-2 gap-3 mb-3">
+        <div class="form-control">
+          <label class="label py-1"><span class="label-text text-xs">🥇 Champion</span></label>
+          <input type="text" name="champion" class="input input-bordered input-sm" placeholder="Team name" value="{{.TResults.Champion}}" />
+        </div>
+        <div class="form-control">
+          <label class="label py-1"><span class="label-text text-xs">🥈 2nd Place</span></label>
+          <input type="text" name="runner_up" class="input input-bordered input-sm" placeholder="Team name" value="{{.TResults.RunnerUp}}" />
+        </div>
+        <div class="form-control">
+          <label class="label py-1"><span class="label-text text-xs">🥉 3rd Place</span></label>
+          <input type="text" name="third_place" class="input input-bordered input-sm" placeholder="Team name" value="{{.TResults.ThirdPlace}}" />
+        </div>
+        <div class="form-control">
+          <label class="label py-1"><span class="label-text text-xs">⚽ Top Scorer</span></label>
+          <input type="text" name="top_scorer" class="input input-bordered input-sm" placeholder="Player name" value="{{.TResults.TopScorer}}" />
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm">Score all tournament bets</button>
+    </form>
+  </div>
+</div>
 
 {{end}}

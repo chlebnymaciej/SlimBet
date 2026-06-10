@@ -1,30 +1,32 @@
 {{define "leaderboard_rows"}}
 {{if .}}
-<table>
-  <thead>
+<div class="overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-100">
+<table class="table table-zebra w-full">
+  <thead class="text-xs text-gray-500 uppercase">
     <tr>
       <th>#</th>
       <th>Player</th>
-      <th>Match pts</th>
-      <th>Group pts</th>
-      <th>Tournament pts</th>
+      <th>Match</th>
+      <th class="hidden xs:table-cell">Groups</th>
+      <th class="hidden xs:table-cell">Tourn.</th>
       <th><strong>Total</strong></th>
     </tr>
   </thead>
   <tbody>
     {{range .}}
     <tr {{if eq .Rank 1}}class="top1"{{else if eq .Rank 2}}class="top2"{{else if eq .Rank 3}}class="top3"{{end}}>
-      <td>{{.Rank}}</td>
-      <td>{{.Username}}</td>
+      <td class="font-bold text-sm">{{.Rank}}</td>
+      <td class="font-medium">{{.Username}}</td>
       <td>{{.MatchPoints}}</td>
-      <td>{{.GroupPoints}}</td>
-      <td>{{.TournamentPoints}}</td>
+      <td class="hidden xs:table-cell">{{.GroupPoints}}</td>
+      <td class="hidden xs:table-cell">{{.TournamentPoints}}</td>
       <td><strong>{{.TotalPoints}}</strong></td>
     </tr>
     {{end}}
   </tbody>
 </table>
+</div>
 {{else}}
-<p>No data yet — place some bets!</p>
+<p class="text-gray-400">No data yet — place some bets!</p>
 {{end}}
 {{end}}

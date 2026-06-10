@@ -1,86 +1,86 @@
 {{define "content"}}
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
-  <h2 style="margin:0">Tournament Bets</h2>
-  <a href="{{url "/fixtures/matrix"}}#tournament" class="outline small">🔲 Matrix view</a>
+<div class="flex justify-between items-center mb-3">
+  <h2 class="text-2xl font-bold">Tournament Bets</h2>
+  <a href="{{url "/fixtures/matrix"}}#tournament" class="btn btn-sm btn-outline">🔲 Matrix</a>
 </div>
 
 {{if .IsLocked}}
-<p class="flash-error">Bets are locked (deadline: {{.Deadline.Format "02 Jan 2006 15:04 UTC"}}).</p>
+<div role="alert" class="alert alert-warning mb-4">
+  <span>Bets are locked (deadline: {{.Deadline.Format "02 Jan 2006 15:04 UTC"}}).</span>
+</div>
 {{else if not .Deadline.IsZero}}
-<p class="hint">Deadline: <strong>{{.Deadline.Format "02 Jan 2006 15:04 UTC"}}</strong></p>
+<p class="text-sm text-gray-500 mb-3">Deadline: <strong class="text-gray-800">{{.Deadline.Format "02 Jan 2006 15:04 UTC"}}</strong></p>
 {{end}}
 
-{{if .Flash}}<p class="flash-success">{{.Flash}}</p>{{end}}
-
-<article>
-  <form method="post" action="{{url "/tournament"}}" {{if .IsLocked}}style="opacity:.6;pointer-events:none"{{end}}>
-    <div class="grid">
-      <label>
-        🥇 1st Place (Champion) — <strong>{{.Points1st}} pts</strong>
-        {{if .Teams}}
-        <select name="first_place" {{if .IsLocked}}disabled{{end}}>
-          <option value="">— select team —</option>
-          {{range .Teams}}
-          <option value="{{.}}"{{if and $.Bet (eq $.Bet.FirstPlace .)}} selected{{end}}>{{.}}</option>
+<div class="card bg-white shadow-sm border border-gray-100">
+  <div class="card-body p-4">
+    <form method="post" action="{{url "/tournament"}}"{{if .IsLocked}} class="opacity-60 pointer-events-none"{{end}}>
+      <div class="grid grid-cols-1 xs:grid-cols-2 gap-4">
+        <div class="form-control">
+          <label class="label py-1"><span class="label-text font-semibold">🥇 1st Place (Champion) — <strong>{{.Points1st}} pts</strong></span></label>
+          {{if .Teams}}
+          <select name="first_place" class="select select-bordered w-full"{{if .IsLocked}} disabled{{end}}>
+            <option value="">— select team —</option>
+            {{range .Teams}}
+            <option value="{{.}}"{{if and $.Bet (eq $.Bet.FirstPlace .)}} selected{{end}}>{{.}}</option>
+            {{end}}
+          </select>
+          {{else}}
+          <input type="text" name="first_place" class="input input-bordered w-full" placeholder="Team name"
+            value="{{if .Bet}}{{.Bet.FirstPlace}}{{end}}"{{if .IsLocked}} disabled{{end}} />
           {{end}}
-        </select>
-        {{else}}
-        <input type="text" name="first_place" placeholder="Team name"
-          value="{{if .Bet}}{{.Bet.FirstPlace}}{{end}}" {{if .IsLocked}}disabled{{end}} />
-        {{end}}
-      </label>
-      <label>
-        🥈 2nd Place — <strong>{{.Points2nd}} pts</strong>
-        {{if .Teams}}
-        <select name="second_place" {{if .IsLocked}}disabled{{end}}>
-          <option value="">— select team —</option>
-          {{range .Teams}}
-          <option value="{{.}}"{{if and $.Bet (eq $.Bet.SecondPlace .)}} selected{{end}}>{{.}}</option>
+        </div>
+        <div class="form-control">
+          <label class="label py-1"><span class="label-text font-semibold">🥈 2nd Place — <strong>{{.Points2nd}} pts</strong></span></label>
+          {{if .Teams}}
+          <select name="second_place" class="select select-bordered w-full"{{if .IsLocked}} disabled{{end}}>
+            <option value="">— select team —</option>
+            {{range .Teams}}
+            <option value="{{.}}"{{if and $.Bet (eq $.Bet.SecondPlace .)}} selected{{end}}>{{.}}</option>
+            {{end}}
+          </select>
+          {{else}}
+          <input type="text" name="second_place" class="input input-bordered w-full" placeholder="Team name"
+            value="{{if .Bet}}{{.Bet.SecondPlace}}{{end}}"{{if .IsLocked}} disabled{{end}} />
           {{end}}
-        </select>
-        {{else}}
-        <input type="text" name="second_place" placeholder="Team name"
-          value="{{if .Bet}}{{.Bet.SecondPlace}}{{end}}" {{if .IsLocked}}disabled{{end}} />
-        {{end}}
-      </label>
-    </div>
-    <div class="grid">
-      <label>
-        🥉 3rd Place — <strong>{{.Points3rd}} pts</strong>
-        {{if .Teams}}
-        <select name="third_place" {{if .IsLocked}}disabled{{end}}>
-          <option value="">— select team —</option>
-          {{range .Teams}}
-          <option value="{{.}}"{{if and $.Bet (eq $.Bet.ThirdPlace .)}} selected{{end}}>{{.}}</option>
+        </div>
+        <div class="form-control">
+          <label class="label py-1"><span class="label-text font-semibold">🥉 3rd Place — <strong>{{.Points3rd}} pts</strong></span></label>
+          {{if .Teams}}
+          <select name="third_place" class="select select-bordered w-full"{{if .IsLocked}} disabled{{end}}>
+            <option value="">— select team —</option>
+            {{range .Teams}}
+            <option value="{{.}}"{{if and $.Bet (eq $.Bet.ThirdPlace .)}} selected{{end}}>{{.}}</option>
+            {{end}}
+          </select>
+          {{else}}
+          <input type="text" name="third_place" class="input input-bordered w-full" placeholder="Team name"
+            value="{{if .Bet}}{{.Bet.ThirdPlace}}{{end}}"{{if .IsLocked}} disabled{{end}} />
           {{end}}
-        </select>
-        {{else}}
-        <input type="text" name="third_place" placeholder="Team name"
-          value="{{if .Bet}}{{.Bet.ThirdPlace}}{{end}}" {{if .IsLocked}}disabled{{end}} />
-        {{end}}
-      </label>
-      <label>
-        ⚽ Top Scorer — <strong>{{.PointsScorer}} pts</strong>
-        {{if .Scorers}}
-        <select name="top_scorer" {{if .IsLocked}}disabled{{end}}>
-          <option value="">— select player —</option>
-          {{range .Scorers}}
-          <option value="{{.}}"{{if and $.Bet (eq $.Bet.TopScorer .)}} selected{{end}}>{{.}}</option>
+        </div>
+        <div class="form-control">
+          <label class="label py-1"><span class="label-text font-semibold">⚽ Top Scorer — <strong>{{.PointsScorer}} pts</strong></span></label>
+          {{if .Scorers}}
+          <select name="top_scorer" class="select select-bordered w-full"{{if .IsLocked}} disabled{{end}}>
+            <option value="">— select player —</option>
+            {{range .Scorers}}
+            <option value="{{.}}"{{if and $.Bet (eq $.Bet.TopScorer .)}} selected{{end}}>{{.}}</option>
+            {{end}}
+          </select>
+          {{else}}
+          <input type="text" name="top_scorer" class="input input-bordered w-full" placeholder="Player name"
+            value="{{if .Bet}}{{.Bet.TopScorer}}{{end}}"{{if .IsLocked}} disabled{{end}} />
+          <p class="text-xs text-gray-400 mt-1">Admin has not loaded scorer candidates yet.</p>
           {{end}}
-        </select>
-        {{else}}
-        <input type="text" name="top_scorer" placeholder="Player name (load scorers in admin)"
-          value="{{if .Bet}}{{.Bet.TopScorer}}{{end}}" {{if .IsLocked}}disabled{{end}} />
-        <small class="text-muted">Admin has not loaded scorer candidates yet.</small>
-        {{end}}
-      </label>
-    </div>
-    {{if not .IsLocked}}
-    <button type="submit">Save tournament bets</button>
-    {{end}}
-    {{if and .Bet .Bet.Points}}
-    <p style="margin-top:1rem">Points awarded: <strong>{{deref .Bet.Points}}</strong></p>
-    {{end}}
-  </form>
-</article>
+        </div>
+      </div>
+      {{if not .IsLocked}}
+      <button type="submit" class="btn btn-primary mt-5">Save tournament bets</button>
+      {{end}}
+      {{if and .Bet .Bet.Points}}
+      <p class="mt-3 text-sm text-gray-600">Points awarded: <strong>{{deref .Bet.Points}}</strong></p>
+      {{end}}
+    </form>
+  </div>
+</div>
 {{end}}

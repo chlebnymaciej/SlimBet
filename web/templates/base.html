@@ -5,42 +5,84 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Slim Bet - World Cup 2026</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4/dist/full.min.css" rel="stylesheet" type="text/css"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          screens: { 'xs': '513px' }
+        }
+      }
+    }
+  </script>
   <link rel="stylesheet" href="{{url "/static/style.css"}}" />
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
-<body>
-  <header class="container-fluid">
-    <nav>
-      <ul>
-        <li><strong>⚽ Slim Bet - World Cup 2026</strong></li>
-      </ul>
-      {{if .Username}}
-      <ul>
-        <li><a href="{{url "/fixtures"}}">Fixtures</a></li>
-        <li><a href="{{url "/groups"}}">Groups</a></li>
-        <li><a href="{{url "/tournament"}}">Tournament</a></li>
-        <li><a href="{{url "/leaderboard"}}">Leaderboard</a></li>
-        {{if .IsAdmin}}<li><a href="{{url "/admin"}}">Admin</a></li>{{end}}
-        <li>
-          <form method="post" action="{{url "/logout"}}" style="margin:0">
-            <button type="submit" class="outline secondary">Logout ({{.Username}})</button>
-          </form>
-        </li>
-      </ul>
-      {{end}}
-    </nav>
-  </header>
+<body class="min-h-screen bg-gray-50">
 
-  <main class="container">
-    {{if .Flash}}<div class="flash-success">{{.Flash}}</div>{{end}}
-    {{if .Error}}<div class="flash-error">{{.Error}}</div>{{end}}
+  <div class="navbar bg-white shadow-sm sticky top-0 z-40 px-4">
+    <div class="navbar-start">
+      <a href="{{url "/"}}" class="font-bold text-lg">⚽ Slim Bet</a>
+    </div>
+    {{if .Username}}
+    <div class="navbar-end hidden md:flex items-center gap-1">
+      <a href="{{url "/fixtures"}}" class="btn btn-ghost btn-sm">Fixtures</a>
+      <a href="{{url "/groups"}}" class="btn btn-ghost btn-sm">Groups</a>
+      <a href="{{url "/tournament"}}" class="btn btn-ghost btn-sm">Tournament</a>
+      <a href="{{url "/leaderboard"}}" class="btn btn-ghost btn-sm">Leaderboard</a>
+      {{if .IsAdmin}}<a href="{{url "/admin"}}" class="btn btn-ghost btn-sm">Admin</a>{{end}}
+      <form method="post" action="{{url "/logout"}}" style="margin:0">
+        <button type="submit" class="btn btn-outline btn-sm">Logout ({{.Username}})</button>
+      </form>
+    </div>
+    <div class="navbar-end flex md:hidden">
+      <div class="dropdown dropdown-end">
+        <label tabindex="0" class="btn btn-ghost btn-circle">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </label>
+        <ul tabindex="0" class="menu menu-sm dropdown-content bg-white rounded-box shadow-lg z-50 mt-3 w-52 p-2 border border-gray-100">
+          <li><a href="{{url "/fixtures"}}">Fixtures</a></li>
+          <li><a href="{{url "/groups"}}">Groups</a></li>
+          <li><a href="{{url "/tournament"}}">Tournament</a></li>
+          <li><a href="{{url "/leaderboard"}}">Leaderboard</a></li>
+          {{if .IsAdmin}}<li><a href="{{url "/admin"}}">Admin</a></li>{{end}}
+          <li class="border-t border-gray-100 mt-1 pt-1">
+            <form method="post" action="{{url "/logout"}}" style="margin:0">
+              <button type="submit" class="w-full text-left text-sm py-1">Logout ({{.Username}})</button>
+            </form>
+          </li>
+        </ul>
+      </div>
+    </div>
+    {{end}}
+  </div>
+
+  <main class="mx-auto px-4 py-5 max-w-5xl">
+    {{if .Flash}}
+    <div role="alert" class="alert alert-success mb-4 shadow-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>{{.Flash}}</span>
+    </div>
+    {{end}}
+    {{if .Error}}
+    <div role="alert" class="alert alert-error mb-4 shadow-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>{{.Error}}</span>
+    </div>
+    {{end}}
     {{template "content" .}}
   </main>
 
-  <footer class="container" style="margin-top:2rem;text-align:center;color:#888;font-size:.85rem">
-    Slim Bet by <a href="https://github.com/chlebnymaciej/SlimBet">chlebnymaciej</a>
+  <footer class="text-center text-sm text-gray-400 py-6 mt-8 border-t border-gray-100">
+    Slim Bet by <a href="https://github.com/chlebnymaciej/SlimBet" class="link">chlebnymaciej</a>
   </footer>
 </body>
 </html>

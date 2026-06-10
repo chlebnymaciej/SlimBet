@@ -1,23 +1,23 @@
 {{define "content"}}
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
-  <h2 style="margin:0">Matrix View</h2>
-  <a href="{{url "/fixtures"}}" class="outline small">📋 List view</a>
+<div class="flex justify-between items-center mb-3">
+  <h2 class="text-2xl font-bold">Matrix View</h2>
+  <a href="{{url "/fixtures"}}" class="btn btn-sm btn-outline">📋 List view</a>
 </div>
 
 <div x-data="{tab: location.hash ? location.hash.slice(1) : 'fixtures'}">
 
-  <div class="matrix-tabs">
-    <button @click="tab='fixtures'" :class="{'tab-active': tab==='fixtures'}">⚽ Fixtures</button>
-    <button @click="tab='groups'"   :class="{'tab-active': tab==='groups'}">🏆 Groups</button>
-    <button @click="tab='tournament'" :class="{'tab-active': tab==='tournament'}">🎯 Tournament</button>
+  <div role="tablist" class="tabs tabs-bordered mb-4">
+    <button role="tab" @click="tab='fixtures'" :class="tab==='fixtures' ? 'tab tab-active' : 'tab'">⚽ Fixtures</button>
+    <button role="tab" @click="tab='groups'"   :class="tab==='groups' ? 'tab tab-active' : 'tab'">🏆 Groups</button>
+    <button role="tab" @click="tab='tournament'" :class="tab==='tournament' ? 'tab tab-active' : 'tab'">🎯 Tournament</button>
   </div>
 
   <!-- ── Fixtures tab ──────────────────────────────────────────────────── -->
   <div x-show="tab==='fixtures'">
-    <div style="text-align:right;margin-bottom:.5rem">
-      <a href="{{url "/fixtures/matrix/csv"}}" class="outline small" role="button">&#11015; Export CSV</a>
+    <div class="text-right mb-2">
+      <a href="{{url "/fixtures/matrix/csv"}}" class="btn btn-xs btn-outline" role="button">&#11015; Export CSV</a>
     </div>
-    <p class="hint" style="margin-bottom:.75rem">
+    <p class="text-sm text-gray-500 mb-3">
       Cell colours:
       <span class="bc-legend bc-high">8+ pts</span>
       <span class="bc-legend bc-mid">5–7 pts</span>
@@ -29,7 +29,7 @@
     {{if not .MatchRows}}
     <p>No fixtures loaded yet.</p>
     {{else}}
-    <div class="overflow-auto">
+    <div class="overflow-x-auto">
     <table class="matrix-table">
       <thead>
         <tr>
@@ -46,7 +46,7 @@
             {{flag .Fixture.HomeTeam}} <strong>{{.Fixture.HomeTeam}}</strong>
             <span style="color:#adb5bd;font-size:.8rem">vs</span>
             {{flag .Fixture.AwayTeam}} <strong>{{.Fixture.AwayTeam}}</strong>
-            <br><small class="text-muted">{{.Fixture.KickoffAt.Format "02 Jan 15:04"}}</small>
+            <br><small class="text-gray-400">{{.Fixture.KickoffAt.Format "02 Jan 15:04"}}</small>
           </td>
           <td class="mx-score">
             {{if .Fixture.IsFinished}}
@@ -61,7 +61,7 @@
               {{if .Bet.Points}}
                 <div class="bc-pts">{{deref .Bet.Points}} pts</div>
               {{else if $row.Fixture.IsFinished}}
-                <div class="bc-pts text-muted">—</div>
+                <div class="bc-pts text-gray-400">—</div>
               {{end}}
               {{if .CanEdit}}
               <a href="{{url "/fixtures"}}#fixture-{{.FixtureID}}" class="bc-edit" title="Edit bet">✏️</a>
@@ -84,10 +84,10 @@
 
   <!-- ── Groups tab ───────────────────────────────────────────────────── -->
   <div x-show="tab==='groups'">
-    <div style="text-align:right;margin-bottom:.5rem">
-      <a href="{{url "/groups/matrix/csv"}}" class="outline small" role="button">&#11015; Export CSV</a>
+    <div class="text-right mb-2">
+      <a href="{{url "/groups/matrix/csv"}}" class="btn btn-xs btn-outline" role="button">&#11015; Export CSV</a>
     </div>
-    <p class="hint" style="margin-bottom:.75rem">
+    <p class="text-sm text-gray-500 mb-3">
       Cell colours:
       <span class="bc-legend bc-high">correct (10 pts)</span>
       <span class="bc-legend bc-0">wrong (0 pts)</span>
@@ -97,7 +97,7 @@
     {{if not .GroupRows}}
     <p>No group data yet — fixtures must be loaded first.</p>
     {{else}}
-    <div class="overflow-auto">
+    <div class="overflow-x-auto">
     <table class="matrix-table">
       <thead>
         <tr>
@@ -130,17 +130,17 @@
 
   <!-- ── Tournament tab ───────────────────────────────────────────────── -->
   <div x-show="tab==='tournament'">
-    <div style="text-align:right;margin-bottom:.5rem">
-      <a href="{{url "/tournament/matrix/csv"}}" class="outline small" role="button">&#11015; Export CSV</a>
+    <div class="text-right mb-2">
+      <a href="{{url "/tournament/matrix/csv"}}" class="btn btn-xs btn-outline" role="button">&#11015; Export CSV</a>
     </div>
-    <p class="hint" style="margin-bottom:.75rem">
+    <p class="text-sm text-gray-500 mb-3">
       Cell colours:
       <span class="bc-legend bc-high">correct</span>
       <span class="bc-legend bc-0">wrong</span>
       <span class="bc-legend bc-pending">pending (not yet scored)</span>
       <span class="bc-legend bc-none">no pick</span>
     </p>
-    <div class="overflow-auto">
+    <div class="overflow-x-auto">
     <table class="matrix-table">
       <thead>
         <tr>
@@ -154,7 +154,7 @@
         <tr class="mx-row">
           <td class="mx-match"><strong>{{.Label}}</strong></td>
           <td class="mx-score">
-            {{if .Actual}}<strong>{{.Actual}}</strong>{{else}}<span class="text-muted">—</span>{{end}}
+            {{if .Actual}}<strong>{{.Actual}}</strong>{{else}}<span class="text-gray-400">—</span>{{end}}
           </td>
           {{range .Cells}}
           <td class="bet-cell {{.CellClass}}">
